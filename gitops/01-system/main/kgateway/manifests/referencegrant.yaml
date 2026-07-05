@@ -1,0 +1,14 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: kgateway-extension-grant
+  namespace: kgateway
+spec:
+  from:
+  - group: gateway.kgateway.dev
+    kind: TrafficPolicy
+    namespace: private-assistant
+  to:
+  - group: gateway.kgateway.dev
+    kind: GatewayExtension
+    name: oauth2-proxy-ext

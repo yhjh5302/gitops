@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-victoria-logs
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/victoria-logs
+    helm:
+      releaseName: victoria-logs
+      values: |
+        vlstorage:
+          replicaCount: 1
+          retentionPeriod: "7d"
+          persistentVolume:
+            enabled: true
+            size: 100Gi
+        vlinsert:
+          replicaCount: 1
+        vlselect:
+          replicaCount: 1
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: victoria-metrics # Share the monitoring namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

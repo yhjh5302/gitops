@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+config:
+  preset: oltp
+
+standalone:
+  persistence:
+    enabled: false

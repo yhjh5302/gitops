@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-gpu-operator
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/gpu-operator
+    helm:
+      releaseName: gpu-operator
+      skipCrds: true # CRDs pre-installed via bootstrap
+      values: |
+        driver:
+          enabled: false # Use driver pre-installed on node
+        toolkit:
+          enabled: true
+        devicePlugin:
+          enabled: true
+        dcgmExporter:
+          enabled: true # Enable GPU metrics collection
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: gpu-operator
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - SkipDryRunOnMissingResource=true

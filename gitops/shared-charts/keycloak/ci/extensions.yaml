@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: Apache-2.0
+mode: production
+
+hostname:
+  hostname: https://sso.example.com
+
+postgresql:
+  enabled: true
+  auth:
+    database: keycloak
+    username: keycloak
+    password: testpassword
+
+extensions:
+  providers:
+    existingConfigMap: keycloak-provider-extension
+    rolloutToken: providers-v1
+  themes:
+    existingConfigMap: keycloak-theme-extension
+    rolloutToken: themes-v1
+
+initContainers:
+  - name: prepare-themes
+    image: docker.io/library/busybox:1.36
+    command:
+      - sh
+      - -c
+      - echo preparing themes
+
+extraManifests:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: keycloak-provider-extension
+      labels:
+        app.kubernetes.io/name: keycloak-provider-extension
+    data: {}
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: keycloak-theme-extension
+      labels:
+        app.kubernetes.io/name: keycloak-theme-extension
+    data: {}

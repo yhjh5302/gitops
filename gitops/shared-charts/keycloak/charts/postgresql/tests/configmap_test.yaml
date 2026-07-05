@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: Apache-2.0
+suite: ConfigMap
+templates:
+  - configmap.yaml
+release:
+  name: test
+  namespace: default
+tests:
+  - it: should initialize app roles through postgres maintenance database
+    template: configmap.yaml
+    documentIndex: 1
+    asserts:
+      - matchRegex:
+          path: data["01-init-users.sh"]
+          pattern: 'psql --username "\$\{POSTGRES_USER\}" --dbname postgres'
+
+  - it: should skip generated init script when disabled and no custom scripts are set
+    template: configmap.yaml
+    set:
+      initdb.runDefaultScript: false
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: should render only custom init scripts when default init script is disabled
+    template: configmap.yaml
+    documentIndex: 1
+    set:
+      initdb.runDefaultScript: false
+      initdb.scripts:
+        10-custom.sql: |
+          CREATE EXTENSION IF NOT EXISTS pgcrypto;
+    asserts:
+      - notExists:
+          path: data["01-init-users.sh"]
+      - matchRegex:
+          path: data["10-custom.sql"]
+          pattern: 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'
+
+  - it: should require SCRAM for local socket connections by default
+    template: configmap.yaml
+    documentIndex: 0
+    asserts:
+      - matchRegex:
+          path: data["pg_hba.conf"]
+          pattern: 'local\s+all\s+all\s+scram-sha-256'
+
+  - it: should allow overriding local socket authentication method
+    template: configmap.yaml
+    documentIndex: 0
+    set:
+      config.localAuthMethod: trust
+    asserts:
+      - matchRegex:
+          path: data["pg_hba.conf"]
+          pattern: 'local\s+all\s+all\s+trust'
+
+  - it: should render structured client CIDRs in pg_hba.conf
+    template: configmap.yaml
+    documentIndex: 0
+    set:
+      config.allowedClientCIDRs:
+        - 10.42.0.0/16
+        - fd00:42::/64
+    asserts:
+      - matchRegex:
+          path: data["pg_hba.conf"]
+          pattern: 'host\s+all\s+all\s+10\.42\.0\.0/16\s+scram-sha-256'
+      - matchRegex:
+          path: data["pg_hba.conf"]
+          pattern: 'host\s+all\s+all\s+fd00:42::/64\s+scram-sha-256'
+
+  - it: should render structured replication CIDRs in replication mode
+    template: configmap.yaml
+    documentIndex: 0
+    set:
+      architecture: replication
+      config.allowedReplicationCIDRs:
+        - 10.43.0.0/16
+    asserts:
+      - matchRegex:
+          path: data["pg_hba.conf"]
+          pattern: 'host\s+postgres\s+replicator\s+10\.43\.0\.0/16\s+scram-sha-256'
+      - matchRegex:
+          path: data["pg_hba.conf"]
+          pattern: 'host\s+replication\s+replicator\s+10\.43\.0\.0/16\s+scram-sha-256'
+
+  - it: should render optional WAL safety settings
+    template: configmap.yaml
+    documentIndex: 0
+    set:
+      replication.wal.maxSlotWalKeepSize: 2GB
+      replication.wal.idleReplicationSlotTimeout: 1h
+      replication.wal.walSenderTimeout: 60s
+    asserts:
+      - matchRegex:
+          path: data["postgresql.conf"]
+          pattern: "max_slot_wal_keep_size = '2GB'"
+      - matchRegex:
+          path: data["postgresql.conf"]
+          pattern: "idle_replication_slot_timeout = '1h'"
+      - matchRegex:
+          path: data["postgresql.conf"]
+          pattern: "wal_sender_timeout = '60s'"

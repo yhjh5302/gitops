@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qwen-inference
+  namespace: private-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: qwen-inference
+  template:
+    metadata:
+      labels:
+        app: qwen-inference
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "jin-vm"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: vllm-qwen
+          image: vllm/vllm-openai:v0.24.0
+          command: ["vllm", "serve"]
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: private-assistant-secrets
+                  key: huggingface-token
+          args:
+            - "google/gemma-4-12b-it"
+            - --host
+            - "0.0.0.0"
+            - --port
+            - "8000"
+            - --gpu-memory-utilization
+            - "0.90"
+            - --max-model-len
+            - "32768"
+            - --max-num-seqs
+            - "64"
+            - --quantization
+            - "fp8"
+            - --kv-cache-dtype
+            - "fp8"
+            - --language-model-only
+            - --enable-auto-tool-choice
+            - --tool-call-parser
+            - "hermes"
+            - --served-model-name
+            - "gemma-4-12b-it"
+            - --trust-remote-code
+          ports:
+            - containerPort: 8000
+              name: http
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            failureThreshold: 360
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 15
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: "32Gi"
+              cpu: "32"
+            requests:
+              nvidia.com/gpu: 1
+              memory: "16Gi"
+              cpu: "16"
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            - name: huggingface-cache
+              mountPath: /root/.cache/huggingface
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 32Gi
+        - name: huggingface-cache
+          persistentVolumeClaim:
+            claimName: qwen-model-cache-pvc

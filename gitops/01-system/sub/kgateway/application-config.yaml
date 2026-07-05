@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sub-kgateway-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Run after operator installation
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # GitOps repository URL
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/01-system/sub/kgateway/manifests
+  destination:
+    server: '{{server}}'
+    namespace: kgateway
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - SkipDryRunOnMissingResource=true

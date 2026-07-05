@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sub-oauth2-proxy
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # Run after secrets are ready
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/oauth2-proxy
+    helm:
+      releaseName: oauth2-proxy
+      values: |
+        config:
+          clientID: "platform"
+          existingSecret: oauth2-proxy-env-secrets # Secret loaded by ExternalSecret
+          # OIDC provider configuration (Keycloak integration)
+          configFile: |
+            provider = "oidc"
+            oidc_issuer_url = "https://keycloak.jin-server.com/realms/platform"
+            skip_oidc_discovery = true
+            login_url = "https://keycloak.jin-server.com/realms/platform/protocol/openid-connect/auth"
+            redeem_url = "http://keycloak.keycloak.svc:8080/realms/platform/protocol/openid-connect/token"
+            oidc_jwks_url = "http://keycloak.keycloak.svc:8080/realms/platform/protocol/openid-connect/certs"
+            email_domains = [ "*" ]
+            cookie_secure = true # Enables cookie secure flag for HTTPS production
+            cookie_name = "_oauth2_proxy"
+            cookie_expire = "12h"
+            cookie_domains = [ ".jin-server.com" ]
+            whitelist_domains = [ ".jin-server.com" ]
+            reverse_proxy = true
+            pass_authorization_header = true
+            pass_user_headers = true
+            set_authorization_header = true
+            ssl_insecure_skip_verify = false
+            upstreams = [ "static://200" ]
+            custom_templates_dir = "/etc/oauth2-proxy/templates"
+        extraVolumes:
+        - name: templates
+          configMap:
+            name: oauth2-proxy-templates
+        extraVolumeMounts:
+        - name: templates
+          mountPath: /etc/oauth2-proxy/templates
+  destination:
+    server: '{{server}}'
+    namespace: oauth2-proxy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

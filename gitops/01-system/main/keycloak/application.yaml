@@ -1,0 +1,354 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-keycloak
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # Run after Vault and ESO are ready
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # GitOps repository URL
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/keycloak
+    helm:
+      releaseName: keycloak
+      values: |
+        fullnameOverride: "keycloak"
+        mode: production
+        image:
+          repository: quay.io/keycloak/keycloak
+          tag: "26.5.4"
+        realmImport:
+          enabled: true
+          files:
+            platform-realm.json: |
+              {
+                "realm": "platform",
+                "enabled": true,
+                "ssoSessionIdleTimeout": 43200,
+                "ssoSessionMaxLifespan": 43200,
+                "ssoSessionIdleTimeoutRememberMe": 43200,
+                "ssoSessionMaxLifespanRememberMe": 43200,
+                "identityProviders": [
+                  {
+                    "alias": "google",
+                    "displayName": "Google",
+                    "providerId": "google",
+                    "enabled": true,
+                    "trustEmail": true,
+                    "storeToken": false,
+                    "addReadTokenRoleOnCreate": false,
+                    "authenticateByDefault": false,
+                    "firstBrokerLoginFlowAlias": "first broker login",
+                    "config": {
+                      "clientId": "${GOOGLE_CLIENT_ID}",
+                      "clientSecret": "${GOOGLE_CLIENT_SECRET}",
+                      "defaultScope": "openid profile email",
+                      "useJwksUrl": "true"
+                    }
+                  }
+                ],
+                "groups": [
+                  {
+                    "name": "platform-admin",
+                    "path": "/platform-admin"
+                  }
+                ],
+                "clientScopes": [
+                  {
+                    "name": "groups",
+                    "protocol": "openid-connect",
+                    "protocolMappers": [
+                      {
+                        "name": "groups",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-group-membership-mapper",
+                        "consentRequired": false,
+                        "config": {
+                          "full.path": "true",
+                          "id.token.claim": "true",
+                          "access.token.claim": "true",
+                          "claim.name": "groups",
+                          "userinfo.token.claim": "true"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "profile",
+                    "protocol": "openid-connect",
+                    "protocolMappers": [
+                      {
+                        "name": "username",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-usermodel-property-mapper",
+                        "consentRequired": false,
+                        "config": {
+                          "user.attribute": "username",
+                          "id.token.claim": "true",
+                          "access.token.claim": "true",
+                          "userinfo.token.claim": "true",
+                          "introspection.token.claim": "true",
+                          "claim.name": "preferred_username",
+                          "jsonType.label": "String"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "email",
+                    "protocol": "openid-connect",
+                    "protocolMappers": [
+                      {
+                        "name": "email",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-usermodel-property-mapper",
+                        "consentRequired": false,
+                        "config": {
+                          "user.attribute": "email",
+                          "id.token.claim": "true",
+                          "access.token.claim": "true",
+                          "userinfo.token.claim": "true",
+                          "introspection.token.claim": "true",
+                          "claim.name": "email",
+                          "jsonType.label": "String"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "roles",
+                    "protocol": "openid-connect"
+                  },
+                  {
+                    "name": "web-origins",
+                    "protocol": "openid-connect"
+                  },
+                  {
+                    "name": "acr",
+                    "protocol": "openid-connect"
+                  }
+                ],
+                "clients": [
+                  {
+                    "clientId": "platform",
+                    "enabled": true,
+                    "protocol": "openid-connect",
+                    "publicClient": false,
+                    "secret": "${OAUTH2_CLIENT_SECRET}",
+                    "redirectUris": [
+                      "https://private-assistant.jin-server.com/oauth2/callback",
+                      "https://argocd.jin-server.com/oauth2/callback",
+                      "https://grafana.jin-server.com/oauth2/callback",
+                      "https://workflows.jin-server.com/oauth2/callback",
+                      "https://code.jin-server.com/oauth2/callback",
+                      "http://localhost:4180/oauth2/callback"
+                    ],
+                    "webOrigins": [
+                      "*"
+                    ],
+                    "defaultClientScopes": [
+                      "web-origins",
+                      "acr",
+                      "roles",
+                      "profile",
+                      "email",
+                      "groups"
+                    ],
+                    "protocolMappers": [
+                      {
+                        "name": "aud-mapper-platform",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-audience-protocol-mapper",
+                        "consentRequired": false,
+                        "config": {
+                          "included.client.audience": "platform",
+                          "id.token.claim": "true",
+                          "access.token.claim": "true"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "clientId": "argocd",
+                    "enabled": true,
+                    "protocol": "openid-connect",
+                    "publicClient": false,
+                    "secret": "${ARGOCD_CLIENT_SECRET}",
+                    "redirectUris": [
+                      "https://argocd.jin-server.com/auth/callback"
+                    ],
+                    "webOrigins": [
+                      "*"
+                    ],
+                    "defaultClientScopes": [
+                      "web-origins",
+                      "acr",
+                      "roles",
+                      "profile",
+                      "email",
+                      "groups"
+                    ],
+                    "protocolMappers": [
+                      {
+                        "name": "aud-mapper-argocd",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-audience-protocol-mapper",
+                        "consentRequired": false,
+                        "config": {
+                          "included.client.audience": "argocd",
+                          "id.token.claim": "true",
+                          "access.token.claim": "true"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "clientId": "grafana",
+                    "enabled": true,
+                    "protocol": "openid-connect",
+                    "publicClient": false,
+                    "secret": "${GRAFANA_CLIENT_SECRET}",
+                    "redirectUris": [
+                      "https://grafana.jin-server.com/login/generic_oauth"
+                    ],
+                    "webOrigins": [
+                      "*"
+                    ],
+                    "defaultClientScopes": [
+                      "web-origins",
+                      "acr",
+                      "roles",
+                      "profile",
+                      "email",
+                      "groups"
+                    ],
+                    "protocolMappers": [
+                      {
+                        "name": "aud-mapper-grafana",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-audience-protocol-mapper",
+                        "consentRequired": false,
+                        "config": {
+                          "included.client.audience": "grafana",
+                          "id.token.claim": "true",
+                          "access.token.claim": "true"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "clientId": "argo-workflows",
+                    "enabled": true,
+                    "protocol": "openid-connect",
+                    "publicClient": false,
+                    "secret": "${ARGO_WORKFLOWS_CLIENT_SECRET}",
+                    "redirectUris": [
+                      "https://workflows.jin-server.com/oauth2/callback"
+                    ],
+                    "webOrigins": [
+                      "*"
+                    ],
+                    "defaultClientScopes": [
+                      "web-origins",
+                      "acr",
+                      "roles",
+                      "profile",
+                      "email",
+                      "groups"
+                    ],
+                    "protocolMappers": [
+                      {
+                        "name": "aud-mapper-argo-workflows",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-audience-protocol-mapper",
+                        "consentRequired": false,
+                        "config": {
+                          "included.client.audience": "argo-workflows",
+                          "id.token.claim": "true",
+                          "access.token.claim": "true"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+        admin:
+          existingSecret: "keycloak-env-secrets"
+          existingSecretUsernameKey: "admin-username"
+          existingSecretPasswordKey: "admin-password"
+        hostname:
+          hostname: "https://keycloak.jin-server.com"
+          strict: false
+        proxy:
+          headers: xforwarded
+          trustedAddresses: ""
+        database:
+          external:
+            vendor: postgres
+            host: "postgres.postgres.svc"
+            port: "5432"
+            name: "keycloak"
+            username: "keycloak"
+            existingSecret: "keycloak-env-secrets"
+            existingSecretPasswordKey: "database-password"
+        extraEnv:
+          - name: KC_HOSTNAME_URL
+            value: "https://keycloak.jin-server.com"
+          - name: KC_PROXY_TRUSTED_ADDRESSES
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-env-secrets
+                key: trusted-addresses
+          - name: GOOGLE_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-env-secrets
+                key: google-client-id
+          - name: GOOGLE_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-env-secrets
+                key: google-client-secret
+
+          - name: OAUTH2_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-env-secrets
+                key: client-secret
+          - name: ARGOCD_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-env-secrets
+                key: argocd-client-secret
+          - name: GRAFANA_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-env-secrets
+                key: grafana-client-secret
+          - name: ARGO_WORKFLOWS_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-env-secrets
+                key: argo-workflows-client-secret
+        extraVolumes:
+          - name: keycloak-theme-volume
+            persistentVolumeClaim:
+              claimName: keycloak-theme
+        extraVolumeMounts:
+          - name: keycloak-theme-volume
+            mountPath: /opt/keycloak/themes/keycloak-theme
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: keycloak
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - SkipDryRunOnMissingResource=true

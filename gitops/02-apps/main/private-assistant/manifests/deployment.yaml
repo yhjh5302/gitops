@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: private-assistant
+  namespace: private-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: private-assistant
+  template:
+    metadata:
+      labels:
+        app: private-assistant
+    spec:
+      containers:
+      - name: assistant
+        # Client frontend interface and Go Backend unified container
+        image: harbor.jin-server.com/docker.io/private-assistant:v1.0.0
+        env:
+        - name: QWEN_API_URL
+          value: "http://qwen-inference.private-assistant.svc:8000/v1"
+        - name: HIGGS_API_URL
+          value: "http://higgs-serving.private-assistant.svc:8000"  # Unified Higgs ASR/TTS API URL
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: private-assistant-secrets
+              key: huggingface-token
+        ports:
+        - containerPort: 8000
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: private-assistant
+  namespace: private-assistant
+spec:
+  ports:
+  - port: 80
+    targetPort: 8000
+  selector:
+    app: private-assistant

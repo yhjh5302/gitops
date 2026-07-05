@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+mode: production
+
+hostname:
+  hostname: https://sso.example.com
+
+postgresql:
+  enabled: true
+  auth:
+    database: keycloak
+    username: keycloak
+    password: testpassword
+
+replicaCount: 3
+
+cache:
+  enabled: true
+  stack: jdbc-ping
+
+pdb:
+  enabled: true

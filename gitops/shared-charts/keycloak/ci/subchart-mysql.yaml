@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+mode: dev
+
+mysql:
+  enabled: true
+  auth:
+    database: keycloak
+    username: keycloak
+    password: devpassword
+
+replicaCount: 1

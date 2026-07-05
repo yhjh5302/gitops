@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-sub-applicationset
+  namespace: argocd
+spec:
+  generators:
+  - matrix:
+      generators:
+      - clusters:
+          selector:
+            matchLabels:
+              argocd.argoproj.io/secret-type: cluster
+              cluster-role: sub-cluster
+      - git:
+          repoURL: 'https://github.com/yhjh5302/gitops.git'
+          revision: HEAD
+          directories:
+          - path: gitops/01-system/sub/*
+          - path: gitops/02-apps/sub/*
+  template:
+    metadata:
+      name: 'root-sub-{{name}}-{{path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/yhjh5302/gitops.git'
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

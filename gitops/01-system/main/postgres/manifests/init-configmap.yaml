@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: postgres
+data:
+  init-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        CREATE DATABASE keycloak;
+        CREATE DATABASE mlflow;
+        CREATE DATABASE argo_workflows;
+
+        CREATE USER keycloak WITH PASSWORD '$KEYCLOAK_DB_PASSWORD';
+        GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
+        \c keycloak;
+        GRANT ALL ON SCHEMA public TO keycloak;
+
+        \c postgres;
+        CREATE USER mlflow WITH PASSWORD '$MLFLOW_DB_PASSWORD';
+        GRANT ALL PRIVILEGES ON DATABASE mlflow TO mlflow;
+        \c mlflow;
+        GRANT ALL ON SCHEMA public TO mlflow;
+
+        \c postgres;
+        CREATE USER argo_workflows WITH PASSWORD '$ARGO_DB_PASSWORD';
+        GRANT ALL PRIVILEGES ON DATABASE argo_workflows TO argo_workflows;
+        \c argo_workflows;
+        GRANT ALL ON SCHEMA public TO argo_workflows;
+    EOSQL

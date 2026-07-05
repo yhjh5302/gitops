@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+initdb:
+  scripts:
+    10-extra.sql: |
+      CREATE TABLE IF NOT EXISTS example (
+        id INT PRIMARY KEY
+      );

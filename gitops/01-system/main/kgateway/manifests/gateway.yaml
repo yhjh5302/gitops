@@ -1,0 +1,21 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: service-gateway
+  namespace: kgateway
+  annotations:
+    gateway.kgateway.dev/gateway-parameters-name: kgateway-override
+spec:
+  gatewayClassName: kgateway # K-Gateway controller class name
+  infrastructure:
+    parametersRef:
+      group: gateway.kgateway.dev
+      kind: GatewayParameters
+      name: kgateway-override
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All # Allow HTTPRoute from all namespaces

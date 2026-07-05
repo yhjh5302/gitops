@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: higgs-serving
+  namespace: private-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: higgs-serving
+  template:
+    metadata:
+      labels:
+        app: higgs-serving
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "jin-server"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: higgs
+          image: lmsysorg/sglang-omni:dev
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: private-assistant-secrets
+                  key: huggingface-token
+            - name: UV_CACHE_DIR
+              value: "/root/.cache/uv/cache"
+            - name: UV_PROJECT_ENVIRONMENT
+              value: "/root/.cache/uv/venv"
+          command: ["/bin/zsh", "-c"]
+          args:
+            - |
+              mkdir -p /workspace
+              if [ ! -d "/workspace/sglang-omni" ]; then
+                git clone https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
+              fi
+              cd /workspace/sglang-omni
+              if [ ! -d "$UV_PROJECT_ENVIRONMENT" ]; then
+                uv venv -p 3.12
+                source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+                uv pip install -v -e .
+              else
+                source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+              fi
+              hf download bosonai/higgs-tts-3-4b
+              sgl-omni serve --model-path bosonai/higgs-tts-3-4b --host 0.0.0.0 --port 8000
+          ports:
+            - containerPort: 8000
+              name: http
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            failureThreshold: 360
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 15
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: "32Gi"
+              cpu: "16"
+            requests:
+              nvidia.com/gpu: 1
+              memory: "16Gi"
+              cpu: "8"
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            - name: huggingface-cache
+              mountPath: /root/.cache/huggingface
+            - name: venv-cache
+              mountPath: /root/.cache/uv
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 32Gi
+        - name: huggingface-cache
+          persistentVolumeClaim:
+            claimName: higgs-model-cache-pvc
+        - name: venv-cache
+          persistentVolumeClaim:
+            claimName: higgs-venv-cache-pvc

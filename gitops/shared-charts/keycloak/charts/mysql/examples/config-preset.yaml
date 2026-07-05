@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+config:
+  preset: read-heavy
+
+standalone:
+  resourcesPreset: medium
+  persistence:
+    enabled: true
+    size: 50Gi

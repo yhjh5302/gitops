@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-mlflow
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3" # Run after database and secrets are ready
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/mlflow
+    helm:
+      releaseName: mlflow
+      values: |
+        image:
+          repository: burakince/mlflow
+          tag: "3.13.0"
+        backendStore:
+          postgres:
+            enabled: true
+            host: "postgres.postgres.svc"
+            port: 5432
+            database: "mlflow"
+          existingDatabaseSecret:
+            name: "mlflow-secrets"
+            usernameKey: "database-username"
+            passwordKey: "database-password"
+        artifactRoot:
+          defaultArtifactRoot: "/mlflow-artifacts"
+        extraVolumes:
+          - name: mlflow-artifacts-volume
+            persistentVolumeClaim:
+              claimName: mlflow-artifacts-pvc
+        extraVolumeMounts:
+          - name: mlflow-artifacts-volume
+            mountPath: /mlflow-artifacts
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: mlflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - SkipDryRunOnMissingResource=true

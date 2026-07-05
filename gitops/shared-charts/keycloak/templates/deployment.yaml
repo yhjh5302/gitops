@@ -1,0 +1,224 @@
+{{/* SPDX-License-Identifier: Apache-2.0 */}}
+{{- include "keycloak.validateAll" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "keycloak.fullname" . }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: {{ .Values.deployment.strategy.type }}
+    {{- if eq .Values.deployment.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.deployment.strategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.deployment.strategy.rollingUpdate.maxSurge }}
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "keycloak.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/secrets: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/realm-import: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/providers: {{ printf "%s|%s|%s" .Values.extensions.providers.existingConfigMap .Values.extensions.providers.existingSecret .Values.extensions.providers.rolloutToken | sha256sum }}
+        checksum/themes: {{ printf "%s|%s|%s" .Values.extensions.themes.existingConfigMap .Values.extensions.themes.existingSecret .Values.extensions.themes.rolloutToken | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "keycloak.podSpecCommon" . | nindent 6 }}
+      {{- if or (include "keycloak.hasDatabase" .) .Values.initContainers }}
+      initContainers:
+        {{- if include "keycloak.hasDatabase" . }}
+        - name: wait-for-db
+          image: docker.io/library/busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for {{ include "keycloak.databaseHost" . }}:{{ include "keycloak.databasePort" . }} ..."
+              until nc -z -w2 {{ include "keycloak.databaseHost" . }} {{ include "keycloak.databasePort" . }}; do
+                sleep 2
+              done
+              echo "Database is reachable."
+        {{- end }}
+        {{- with .Values.initContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: keycloak
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /opt/keycloak/bin/kc.sh
+          args:
+            {{- include "keycloak.commandArgs" . | nindent 12 }}
+          env:
+            {{- include "keycloak.runtimeEnv" . | nindent 12 }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.http.port }}
+            - name: management
+              containerPort: {{ .Values.http.managementPort }}
+            {{- if gt (int .Values.replicaCount) 1 }}
+            - name: jgroups
+              containerPort: 7800
+            - name: jgroups-fd
+              containerPort: 57800
+            {{- end }}
+          {{- if and .Values.health.enabled .Values.management.healthEnabled .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ include "keycloak.managementEndpointPath" (dict "root" . "path" "/health/live") }}
+              port: management
+            initialDelaySeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "liveness" "field" "initialDelaySeconds") }}
+            periodSeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "liveness" "field" "periodSeconds") }}
+            timeoutSeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "liveness" "field" "timeoutSeconds") }}
+            failureThreshold: {{ include "keycloak.probeValue" (dict "root" . "probe" "liveness" "field" "failureThreshold") }}
+          {{- end }}
+          {{- if and .Values.health.enabled .Values.management.healthEnabled .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ include "keycloak.managementEndpointPath" (dict "root" . "path" "/health/ready") }}
+              port: management
+            initialDelaySeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "readiness" "field" "initialDelaySeconds") }}
+            periodSeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "readiness" "field" "periodSeconds") }}
+            timeoutSeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "readiness" "field" "timeoutSeconds") }}
+            failureThreshold: {{ include "keycloak.probeValue" (dict "root" . "probe" "readiness" "field" "failureThreshold") }}
+          {{- end }}
+          {{- if and .Values.health.enabled .Values.management.healthEnabled .Values.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ include "keycloak.managementEndpointPath" (dict "root" . "path" "/health/started") }}
+              port: management
+            initialDelaySeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "startup" "field" "initialDelaySeconds") }}
+            periodSeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "startup" "field" "periodSeconds") }}
+            timeoutSeconds: {{ include "keycloak.probeValue" (dict "root" . "probe" "startup" "field" "timeoutSeconds") }}
+            failureThreshold: {{ include "keycloak.probeValue" (dict "root" . "probe" "startup" "field" "failureThreshold") }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- include "keycloak.resources" . | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.realmImport.enabled }}
+            - name: realm-import
+              mountPath: /opt/keycloak/data/import
+            {{- end }}
+            {{- if or .Values.extensions.providers.existingConfigMap .Values.extensions.providers.existingSecret }}
+            - name: providers
+              mountPath: /opt/keycloak/providers
+            {{- end }}
+            {{- if or .Values.extensions.themes.existingConfigMap .Values.extensions.themes.existingSecret }}
+            - name: themes
+              mountPath: /opt/keycloak/themes
+            {{- end }}
+            {{- if include "keycloak.hasDatabaseTlsVolume" . }}
+            - name: database-tls
+              mountPath: {{ .Values.database.tls.mountPath }}
+              readOnly: true
+            {{- end }}
+            {{- if include "keycloak.hasTruststoreVolume" . }}
+            - name: truststore
+              mountPath: {{ .Values.truststore.mountPath }}
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.extraContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.realmImport.enabled }}
+        - name: realm-import
+          {{- if or .Values.realmImport.files .Values.realmImport.existingConfigMap }}
+          projected:
+            sources:
+              {{- if .Values.realmImport.files }}
+              - configMap:
+                  name: {{ include "keycloak.realmImportConfigMapName" . }}
+              {{- end }}
+              {{- if .Values.realmImport.existingConfigMap }}
+              - configMap:
+                  name: {{ .Values.realmImport.existingConfigMap }}
+              {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+        {{- if or .Values.extensions.providers.existingConfigMap .Values.extensions.providers.existingSecret }}
+        - name: providers
+          projected:
+            sources:
+              {{- if .Values.extensions.providers.existingConfigMap }}
+              - configMap:
+                  name: {{ .Values.extensions.providers.existingConfigMap }}
+              {{- end }}
+              {{- if .Values.extensions.providers.existingSecret }}
+              - secret:
+                  name: {{ .Values.extensions.providers.existingSecret }}
+              {{- end }}
+        {{- end }}
+        {{- if or .Values.extensions.themes.existingConfigMap .Values.extensions.themes.existingSecret }}
+        - name: themes
+          projected:
+            sources:
+              {{- if .Values.extensions.themes.existingConfigMap }}
+              - configMap:
+                  name: {{ .Values.extensions.themes.existingConfigMap }}
+              {{- end }}
+              {{- if .Values.extensions.themes.existingSecret }}
+              - secret:
+                  name: {{ .Values.extensions.themes.existingSecret }}
+              {{- end }}
+        {{- end }}
+        {{- if include "keycloak.hasDatabaseTlsVolume" . }}
+        - name: database-tls
+          projected:
+            sources:
+              {{- if .Values.database.tls.existingConfigMap }}
+              - configMap:
+                  name: {{ .Values.database.tls.existingConfigMap }}
+              {{- end }}
+              {{- if .Values.database.tls.existingSecret }}
+              - secret:
+                  name: {{ .Values.database.tls.existingSecret }}
+              {{- end }}
+        {{- end }}
+        {{- if include "keycloak.hasTruststoreVolume" . }}
+        - name: truststore
+          projected:
+            sources:
+              {{- if .Values.truststore.existingConfigMap }}
+              - configMap:
+                  name: {{ .Values.truststore.existingConfigMap }}
+              {{- end }}
+              {{- if .Values.truststore.existingSecret }}
+              - secret:
+                  name: {{ include "keycloak.truststoreSecretName" . }}
+              {{- end }}
+              {{- if and (not .Values.truststore.existingSecret) (include "keycloak.truststoreSecretManagedByExternalSecret" .) }}
+              - secret:
+                  name: {{ include "keycloak.truststoreSecretName" . }}
+              {{- end }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}

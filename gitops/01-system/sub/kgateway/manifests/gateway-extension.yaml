@@ -1,0 +1,22 @@
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: GatewayExtension
+metadata:
+  name: oauth2-proxy-ext
+  namespace: kgateway
+spec:
+  type: ExtAuth
+  extAuth:
+    headersToForward:
+    - cookie
+    - authorization
+    - x-forwarded-for
+    httpService:
+      backendRef:
+        name: oauth2-proxy
+        namespace: oauth2-proxy
+        port: 80
+      pathPrefix: /oauth2/auth
+      authorizationResponse:
+        # Pass authorization header downstream (contains OIDC Bearer token)
+        headersToBackend:
+        - authorization

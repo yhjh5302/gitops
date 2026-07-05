@@ -1,0 +1,296 @@
+# SPDX-License-Identifier: Apache-2.0
+{{- if and (eq .Values.architecture "replication") (gt (int .Values.replication.readReplicas.replicaCount) 0) }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "mysql.replicaStatefulSetName" . }}
+  labels:
+    {{- include "mysql.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "mysql.replicasHeadlessServiceName" . }}
+  replicas: {{ .Values.replication.readReplicas.replicaCount }}
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      {{- include "mysql.componentLabels" (dict "root" . "role" "replica") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mysql.componentLabels" (dict "root" . "role" "replica") | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "mysql.podSpecCommon" . | nindent 6 }}
+      initContainers:
+        {{- include "mysql.tlsVolumePermissionsInitContainer" . | nindent 8 }}
+        - name: clone-source
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -ec
+            - |
+              DATA_DIR="/var/lib/mysql"
+              CLONE_DONE="${DATA_DIR}/.helmforge-clone-complete"
+              if [ -f "${CLONE_DONE}" ]; then
+                exit 0
+              fi
+              if [ -d "${DATA_DIR}/mysql" ]; then
+                find "${DATA_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+              fi
+
+              ordinal="${HOSTNAME##*-}"
+              server_id=$(( {{ .Values.replication.readReplicas.serverIdBase }} + ordinal + 1 ))
+
+              cat /config/my.cnf > /etc/mysql/conf.d/zz-chart.cnf
+              cat > /etc/mysql/conf.d/zz-role.cnf <<EOF
+              [mysqld]
+              server_id = ${server_id}
+              read_only = ON
+              super_read_only = ON
+              relay_log = mysql-relay-bin
+              gtid_mode = ON
+              enforce_gtid_consistency = ON
+              log_replica_updates = ON
+              replica_parallel_workers = {{ .Values.replication.replicaTuning.parallelWorkers }}
+              EOF
+
+              until MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysqladmin ping -h {{ include "mysql.sourceServiceName" . }} -P {{ .Values.service.port }} -uroot {{ include "mysql.mysqlCliTlsArgs" . }} --silent; do
+                sleep 5
+              done
+
+              mysqld --initialize-insecure --user=mysql --datadir="${DATA_DIR}"
+              mysqld --user=mysql --datadir="${DATA_DIR}" --socket=/tmp/mysql.sock --pid-file=/tmp/mysql.pid --skip-networking --read-only=OFF --super-read-only=OFF &
+
+              until mysqladmin --socket=/tmp/mysql.sock ping --silent; do
+                sleep 2
+              done
+
+              mysql --socket=/tmp/mysql.sock -uroot <<EOSQL
+              ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+              GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+              FLUSH PRIVILEGES;
+              EOSQL
+
+              MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysqldump \
+                -h {{ include "mysql.sourceServiceName" . }} \
+                -P {{ .Values.service.port }} \
+                -uroot \
+                {{ include "mysql.mysqlCliTlsArgs" . }} \
+                --single-transaction \
+                --set-gtid-purged=ON \
+                --all-databases \
+                --triggers \
+                --routines \
+                --events \
+                > /tmp/source.sql
+
+              MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --socket=/tmp/mysql.sock -uroot < /tmp/source.sql
+
+              MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --socket=/tmp/mysql.sock -uroot <<EOSQL
+              SET GLOBAL super_read_only = OFF;
+              SET GLOBAL read_only = OFF;
+              ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+              CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+              GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+              FLUSH PRIVILEGES;
+              EOSQL
+
+              touch "${CLONE_DONE}"
+              mysqladmin --socket=/tmp/mysql.sock -uroot -p"${MYSQL_ROOT_PASSWORD}" shutdown || true
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mysql.secretName" . }}
+                  key: {{ .Values.auth.existingSecretRootPasswordKey }}
+            - name: REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mysql.secretName" . }}
+                  key: {{ .Values.auth.existingSecretReplicationPasswordKey }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: config
+              mountPath: /config
+            - name: mysql-conf
+              mountPath: /etc/mysql/conf.d
+            {{- if .Values.tls.enabled }}
+            {{- include "mysql.tlsVolumeMount" . | nindent 12 }}
+            {{- end }}
+      containers:
+        - name: mysql
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -ec
+            - |
+              ordinal="${HOSTNAME##*-}"
+              server_id=$(( {{ .Values.replication.readReplicas.serverIdBase }} + ordinal + 1 ))
+              cat /config/my.cnf > /etc/mysql/conf.d/zz-chart.cnf
+              cat > /etc/mysql/conf.d/zz-role.cnf <<EOF
+              [mysqld]
+              server_id = ${server_id}
+              read_only = ON
+              super_read_only = ON
+              relay_log = mysql-relay-bin
+              gtid_mode = ON
+              enforce_gtid_consistency = ON
+              log_replica_updates = ON
+              replica_parallel_workers = {{ .Values.replication.replicaTuning.parallelWorkers }}
+              EOF
+              exec docker-entrypoint.sh mysqld
+          ports:
+            - name: mysql
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mysql.secretName" . }}
+                  key: {{ .Values.auth.existingSecretRootPasswordKey }}
+            - name: REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mysql.secretName" . }}
+                  key: {{ .Values.auth.existingSecretReplicationPasswordKey }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -ec
+                - {{ include "mysql.probeCommandString" . | quote }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -ec
+                - {{ include "mysql.replicaReadinessCommandString" . | quote }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -ec
+                - {{ include "mysql.probeCommandString" . | quote }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - sh
+                  - -ec
+                  - |
+                    until MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysqladmin ping -h 127.0.0.1 -P {{ .Values.service.port }} -uroot --silent; do
+                      sleep 2
+                    done
+                    configured="$(MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql -h 127.0.0.1 -P {{ .Values.service.port }} -uroot -Nse "SELECT COUNT(*) FROM performance_schema.replication_connection_configuration WHERE CHANNEL_NAME = ''")"
+                    if [ "${configured}" = "0" ]; then
+                      MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql -h 127.0.0.1 -P {{ .Values.service.port }} -uroot <<EOSQL
+                      SET GLOBAL super_read_only = OFF;
+                      SET GLOBAL read_only = OFF;
+                      CHANGE REPLICATION SOURCE TO
+                        SOURCE_HOST='{{ include "mysql.sourceServiceName" . }}',
+                        SOURCE_PORT={{ .Values.service.port }},
+                        SOURCE_USER='{{ .Values.auth.replicationUsername }}',
+                        SOURCE_PASSWORD='${REPLICATION_PASSWORD}',
+                        {{ include "mysql.replicationTlsClause" . | nindent 24 }}
+                        SOURCE_AUTO_POSITION=1,
+                        GET_SOURCE_PUBLIC_KEY=1;
+                      START REPLICA;
+                      SET GLOBAL read_only = ON;
+                      SET GLOBAL super_read_only = ON;
+                    EOSQL
+                    fi
+          resources:
+            {{- if .Values.replication.readReplicas.resources }}
+            {{- toYaml .Values.replication.readReplicas.resources | nindent 12 }}
+            {{- else }}
+            {{- include "mysql.resourcesPreset" (dict "preset" .Values.replication.readReplicas.resourcesPreset) | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: config
+              mountPath: /config
+            - name: mysql-conf
+              mountPath: /etc/mysql/conf.d
+            {{- if .Values.tls.enabled }}
+            {{- include "mysql.tlsVolumeMount" . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- if .Values.metrics.enabled }}
+        - name: mysqld-exporter
+          image: "{{ .Values.metrics.image.repository }}:{{ .Values.metrics.image.tag }}"
+          imagePullPolicy: {{ .Values.metrics.image.pullPolicy }}
+          args:
+            {{- include "mysql.metricsArgs" . | nindent 12 }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.metricsPort }}
+          env:
+            {{- include "mysql.metricsEnv" . | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- if .Values.metrics.resources }}
+            {{- toYaml .Values.metrics.resources | nindent 12 }}
+            {{- else }}
+            {{- include "mysql.metricsResourcesPreset" . | nindent 12 }}
+            {{- end }}
+        {{- end }}
+      volumes:
+        - name: mysql-conf
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "mysql.configMapName" . }}
+        {{- if .Values.tls.enabled }}
+        {{- include "mysql.tlsVolumes" . | nindent 8 }}
+        {{- end }}
+        {{- if not .Values.replication.readReplicas.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+  {{- if .Values.replication.readReplicas.persistence.enabled }}
+  volumeClaimTemplates:
+    {{- include "mysql.volumeClaimTemplate" (dict "root" . "persistence" .Values.replication.readReplicas.persistence) | nindent 4 }}
+  {{- end }}
+{{- end }}

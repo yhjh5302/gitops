@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-proxy-templates
+  namespace: oauth2-proxy
+data:
+  sign_in.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Jin-Server</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cg%20transform='scale(1,1.2)'%3E%3Crect%20x='8'%20y='12'%20width='48'%20height='32'%20rx='4'%20ry='4'%20fill='none'%20stroke='%231E40AF'%20stroke-width='4'/%3E%3Cline%20x1='32'%20y1='44'%20x2='32'%20y2='52'%20stroke='%231E40AF'%20stroke-width='4'%20stroke-linecap='round'/%3E%3Cline%20x1='24'%20y1='52'%20x2='40'%20y2='52'%20stroke='%231E40AF'%20stroke-width='4'%20stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+      <style>
+        body {
+          font-family: 'Inter', sans-serif;
+        }
+        .spin {
+          animation: spin 6s linear infinite;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    </head>
+    <body class="bg-gradient-to-r from-blue-50 to-white min-h-screen flex flex-col items-center justify-center text-center p-6">
+      <div class="mb-10">
+        <svg class="w-24 h-24 text-blue-600 spin mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <h1 class="text-4xl font-extrabold mt-6 text-blue-800">Welcome to Jin-Server</h1>
+        <p class="text-gray-600 mt-2 text-lg">Start building your own AI model</p>
+      </div>
+      <a href="{{.ProxyPrefix}}/start?rd={{.Redirect}}" class="px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded-xl shadow-md hover:bg-blue-700 transition duration-300">
+        Click to Sign In
+      </a>
+    </body>
+    </html>

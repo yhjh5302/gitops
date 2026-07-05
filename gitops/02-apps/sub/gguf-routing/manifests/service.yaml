@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: local-gguf-model
+  namespace: private-assistant
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  selector: {}
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: local-gguf-model
+  namespace: private-assistant
+subsets:
+- addresses:
+  - ip: 10.96.0.1 # Kind docker bridge host IP (can be customized dynamically via config)
+  ports:
+  - name: http
+    port: 8080

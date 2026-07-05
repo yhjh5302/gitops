@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: Apache-2.0
+mode: production
+
+hostname:
+  hostname: https://sso.example.com
+  admin: https://admin-sso.example.com
+
+postgresql:
+  enabled: true
+  auth:
+    database: keycloak
+    username: keycloak
+    password: testpassword
+
+ingress:
+  public:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - host: sso.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - sso.example.com
+        secretName: keycloak-tls
+  admin:
+    enabled: true
+    ingressClassName: internal-nginx
+    hosts:
+      - host: admin-sso.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - admin-sso.example.com
+        secretName: keycloak-admin-tls

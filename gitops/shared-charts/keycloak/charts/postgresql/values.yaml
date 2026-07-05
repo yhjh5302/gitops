@@ -1,0 +1,521 @@
+# SPDX-License-Identifier: Apache-2.0
+# =============================================================================
+# PostgreSQL Helm Chart - Default Values
+# =============================================================================
+# Supported architectures:
+# - standalone
+# - replication
+
+# -- PostgreSQL deployment mode: standalone | replication
+architecture: standalone
+
+# -- Override chart name
+nameOverride: ""
+# -- Override full release name
+fullnameOverride: ""
+
+# -- Labels added to all resources
+commonLabels: {}
+
+# -- Kubernetes cluster domain
+clusterDomain: cluster.local
+
+# =============================================================================
+# Image
+# =============================================================================
+
+image:
+  # -- PostgreSQL image repository
+  repository: docker.io/library/postgres
+  # -- PostgreSQL image tag
+  tag: "18.4-trixie"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# =============================================================================
+# Authentication
+# =============================================================================
+
+auth:
+  # -- PostgreSQL superuser password. Auto-generated only for a first install without persisted data when empty and no existingSecret is set.
+  postgresPassword: ""
+  # -- Application database created on first bootstrap
+  database: app
+  # -- Application user created on first bootstrap
+  username: app
+  # -- Application user password. Auto-generated only for a first install without persisted data when empty and no existingSecret is set.
+  password: ""
+  # -- Replication user used by read replicas
+  replicationUsername: replicator
+  # -- Replication user password. Auto-generated only for a first install without persisted data when empty and no existingSecret is set.
+  replicationPassword: ""
+  # -- Allow password generation even when the chart detects an existing primary PVC. Dangerous unless the data directory is empty.
+  allowPasswordGenerationWithExistingData: false
+  # -- Existing secret with PostgreSQL passwords
+  existingSecret: ""
+  # -- Usernames and database names remain regular values on purpose. This chart only reads secrets for sensitive runtime data.
+  # -- Secret key for the PostgreSQL superuser password in auth.existingSecret
+  existingSecretPostgresPasswordKey: postgres-password
+  # -- Secret key for the application user password in auth.existingSecret
+  existingSecretUserPasswordKey: user-password
+  # -- Secret key for the replication user password in auth.existingSecret
+  existingSecretReplicationPasswordKey: replication-password
+
+# =============================================================================
+# PostgreSQL Configuration
+# =============================================================================
+
+config:
+  # -- Authentication method for local Unix-socket connections in pg_hba.conf.
+  # Use scram-sha-256 for production. Set to trust only for tightly controlled bootstrap/debug workflows.
+  localAuthMethod: scram-sha-256
+  # -- CIDRs allowed to connect to regular PostgreSQL databases in generated pg_hba.conf.
+  # Defaults preserve chart compatibility. Restrict this list to pod/client CIDRs in production.
+  allowedClientCIDRs:
+    - 0.0.0.0/0
+    - ::/0
+  # -- CIDRs allowed to connect to the replication pseudo-database in generated pg_hba.conf.
+  # Used only when architecture=replication. Restrict this list to replica pod CIDRs in production.
+  allowedReplicationCIDRs:
+    - 0.0.0.0/0
+    - ::/0
+  # -- Optional configuration preset: none | small | medium | large
+  preset: none
+  # -- Extra postgresql.conf content appended to the generated configuration
+  postgresql: ""
+  # -- Structured pg_hba.conf entries appended after the generated defaults
+  pgHbaEntries: []
+    # - type: host
+    #   database: app
+    #   user: app
+    #   address: 10.0.0.0/8
+    #   method: scram-sha-256
+    #   options: ""
+  # -- Extra pg_hba.conf content appended to the generated host-based authentication rules
+  pgHba: ""
+
+# =============================================================================
+# TLS
+# =============================================================================
+
+tls:
+  # -- Enable TLS for PostgreSQL server and internal clients
+  enabled: false
+  # -- Existing secret containing server TLS materials
+  existingSecret: ""
+  # -- Certificate filename in the TLS secret
+  certFilename: tls.crt
+  # -- Private key filename in the TLS secret
+  keyFilename: tls.key
+  # -- CA filename in the TLS secret
+  caFilename: ca.crt
+  # -- libpq sslmode used by internal probes, replication, and exporter
+  sslMode: require
+  # -- Minimum TLS protocol version accepted by PostgreSQL
+  minProtocolVersion: TLSv1.2
+  volumePermissions:
+    # -- Copy TLS secret material into an owned emptyDir and restrict the private key to 0600.
+    # Enable when PostgreSQL rejects mounted Secret key permissions.
+    enabled: false
+    # -- Security context for the TLS permission init container.
+    securityContext:
+      runAsUser: 0
+      runAsNonRoot: false
+      allowPrivilegeEscalation: false
+      capabilities:
+        add:
+          - CHOWN
+          - FOWNER
+        drop:
+          - ALL
+
+# =============================================================================
+# External Secrets
+# =============================================================================
+
+externalSecrets:
+  # -- Render ExternalSecret resources for clusters that already run External Secrets Operator.
+  enabled: false
+  # -- ExternalSecret API version.
+  apiVersion: external-secrets.io/v1
+  # -- Refresh interval used by rendered ExternalSecret resources.
+  refreshInterval: 1h
+  secretStoreRef:
+    # -- SecretStore or ClusterSecretStore name. Required when externalSecrets.enabled=true.
+    name: ""
+    # -- Secret store kind.
+    kind: SecretStore
+  target:
+    # -- ExternalSecret target creation policy.
+    creationPolicy: Owner
+  auth:
+    # -- Manage the PostgreSQL auth Secret with External Secrets Operator.
+    enabled: false
+    # -- Optional target Secret name. Defaults to the chart auth Secret name.
+    targetName: ""
+    postgresPasswordRemoteRef: {}
+      # key: postgresql/auth
+      # property: postgres-password
+    userPasswordRemoteRef: {}
+      # key: postgresql/auth
+      # property: user-password
+    replicationPasswordRemoteRef: {}
+      # key: postgresql/auth
+      # property: replication-password
+  tls:
+    # -- Manage the TLS Secret with External Secrets Operator. Requires tls.enabled=true.
+    enabled: false
+    # -- Optional target Secret name. Defaults to the chart TLS Secret name.
+    targetName: ""
+    certRemoteRef: {}
+      # key: postgresql/tls
+      # property: tls.crt
+    keyRemoteRef: {}
+      # key: postgresql/tls
+      # property: tls.key
+    caRemoteRef: {}
+      # key: postgresql/tls
+      # property: ca.crt
+  backup:
+    # -- Manage the backup S3 credential Secret with External Secrets Operator. Requires backup.enabled=true.
+    enabled: false
+    # -- Optional target Secret name. Defaults to the chart backup Secret name.
+    targetName: ""
+    accessKeyRemoteRef: {}
+      # key: postgresql/backup
+      # property: access-key
+    secretKeyRemoteRef: {}
+      # key: postgresql/backup
+      # property: secret-key
+
+# =============================================================================
+# Initialization
+# =============================================================================
+
+initdb:
+  # -- Run the chart-generated first-boot script that creates the application database, application user, and replication user
+  runDefaultScript: true
+  # -- Additional init scripts written into docker-entrypoint-initdb.d
+  scripts: {}
+    # 10-extra.sql: |
+    #   CREATE EXTENSION IF NOT EXISTS pgcrypto;
+  # -- Existing ConfigMap mounted into docker-entrypoint-initdb.d in addition to the generated scripts
+  existingConfigMap: ""
+
+# =============================================================================
+# Standalone
+# =============================================================================
+
+standalone:
+  # -- Optional resource preset: none | small | medium | large
+  resourcesPreset: small
+  persistence:
+    # -- Enable PVC for standalone mode
+    enabled: true
+    # -- Storage class for standalone PVC
+    storageClass: ""
+    # -- Access modes for standalone PVC
+    accessModes:
+      - ReadWriteOnce
+    # -- PVC size for standalone mode
+    size: 8Gi
+  # -- Resources for standalone PostgreSQL
+  resources: {}
+
+# =============================================================================
+# Replication
+# =============================================================================
+
+replication:
+  primary:
+    # -- Optional resource preset: none | small | medium | large
+    resourcesPreset: small
+    persistence:
+      # -- Enable PVC for the primary StatefulSet
+      enabled: true
+      # -- Storage class for primary PVCs
+      storageClass: ""
+      # -- Access modes for primary PVCs
+      accessModes:
+        - ReadWriteOnce
+      # -- PVC size for the primary pod
+      size: 20Gi
+    # -- Resources for the primary PostgreSQL pod
+    resources: {}
+    probes:
+      # -- In replication mode, require the primary readiness check to confirm the pod is not in recovery mode
+      requireWritable: true
+  readReplicas:
+    # -- Optional resource preset: none | small | medium | large
+    resourcesPreset: small
+    # -- Number of read replica pods
+    replicaCount: 2
+    persistence:
+      # -- Enable PVCs for read replicas
+      enabled: true
+      # -- Storage class for replica PVCs
+      storageClass: ""
+      # -- Access modes for replica PVCs
+      accessModes:
+        - ReadWriteOnce
+      # -- PVC size per read replica
+      size: 20Gi
+    # -- Resources for read replica pods
+    resources: {}
+    probes:
+      # -- In replication mode, require replica readiness to confirm the pod is in recovery mode
+      requireRecoveryMode: true
+  wal:
+    # -- WAL retention kept locally for replicas and recovery workflows
+    keepSize: 512MB
+    # -- Maximum WAL sender processes
+    maxSenders: 10
+    # -- Maximum replication slots
+    maxReplicationSlots: 10
+    # -- Maximum WAL retained by replication slots before PostgreSQL can invalidate lagging slots. Empty uses PostgreSQL default.
+    maxSlotWalKeepSize: ""
+    # -- Timeout for inactive replication slots before invalidation. Empty uses PostgreSQL default.
+    idleReplicationSlotTimeout: ""
+    # -- Timeout for WAL sender responses from standby servers. Empty uses PostgreSQL default.
+    walSenderTimeout: ""
+  slots:
+    # -- Use physical replication slots for read replicas. Disabled by default to preserve compatibility.
+    enabled: false
+    # -- Prefix used to build deterministic per-replica slot names.
+    namePrefix: replica
+  pdb:
+    # -- Enable a PodDisruptionBudget by default in replication mode
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+  scheduling:
+    # -- Enable opinionated default placement rules in replication mode when global affinity/topologySpreadConstraints are empty
+    enableDefaultPodAntiAffinity: true
+    enableDefaultTopologySpread: true
+    topologyKey: kubernetes.io/hostname
+
+# =============================================================================
+# Service
+# =============================================================================
+
+service:
+  # -- Service type for PostgreSQL client access
+  type: ClusterIP
+  annotations: {}
+  primaryAnnotations: {}
+  replicasAnnotations: {}
+  # -- PostgreSQL listener port
+  port: 5432
+  # -- Metrics port exposed when metrics.enabled=true
+  metricsPort: 9187
+  # -- IP family policy. One of: SingleStack | PreferDualStack | RequireDualStack. Omit for cluster default.
+  # @default -- omitted
+  # ipFamilyPolicy: PreferDualStack
+  # -- Ordered list of IP families for the Service. Each entry: IPv4 | IPv6. Omit for cluster default.
+  # @default -- omitted
+  # ipFamilies:
+  #   - IPv4
+  #   - IPv6
+
+# =============================================================================
+# Metrics
+# =============================================================================
+
+metrics:
+  # -- Enable postgres_exporter sidecar
+  enabled: false
+  # -- Optional resource preset for postgres_exporter: none | small | medium
+  resourcesPreset: small
+  service:
+    # -- Annotations applied to metrics Services
+    annotations: {}
+  image:
+    # -- postgres_exporter image repository
+    repository: quay.io/prometheuscommunity/postgres-exporter
+    # -- postgres_exporter image tag
+    tag: "v0.18.0"
+    pullPolicy: IfNotPresent
+  # -- Resources for postgres_exporter
+  resources: {}
+  serviceMonitor:
+    # -- Create a ServiceMonitor (requires Prometheus Operator)
+    enabled: false
+    interval: 30s
+    labels: {}
+
+# =============================================================================
+# Backup
+# =============================================================================
+
+backup:
+  # -- Enable built-in backup CronJob support
+  enabled: false
+  # -- Backup schedule in Cron format
+  schedule: "0 3 * * *"
+  # -- Suspend backup execution
+  suspend: false
+  # -- CronJob concurrency policy
+  concurrencyPolicy: Forbid
+  # -- Successful job history retained by the CronJob
+  successfulJobsHistoryLimit: 3
+  # -- Failed job history retained by the CronJob
+  failedJobsHistoryLimit: 3
+  # -- Job backoff limit
+  backoffLimit: 1
+  # -- Prefix used in generated backup archive names
+  archivePrefix: postgresql
+  # -- Resources applied to the backup dump and upload containers
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  images:
+    uploader:
+      repository: docker.io/helmforge/mc
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    postgresql:
+      repository: docker.io/library/postgres
+      tag: "18.4-trixie"
+      pullPolicy: IfNotPresent
+  s3:
+    # -- S3-compatible endpoint URL, for example: https://s3.amazonaws.com or https://minio.example.com
+    endpoint: ""
+    # -- Target bucket name
+    bucket: ""
+    # -- Optional key prefix inside the bucket
+    prefix: postgresql
+    # -- Create the bucket automatically when it does not exist yet
+    createBucketIfNotExists: true
+    # -- Existing secret containing access-key and secret-key
+    existingSecret: ""
+    # -- Secret key name for the access key inside backup.s3.existingSecret
+    existingSecretAccessKeyKey: access-key
+    # -- Secret key name for the secret key inside backup.s3.existingSecret
+    existingSecretSecretKeyKey: secret-key
+    # -- Inline access key used when backup.s3.existingSecret is not set
+    accessKey: ""
+    # -- Inline secret key used when backup.s3.existingSecret is not set
+    secretKey: ""
+  database:
+    # -- Extra arguments passed to pg_dumpall
+    pgDumpAllArgs: "--clean --if-exists"
+
+# =============================================================================
+# NetworkPolicy
+# =============================================================================
+
+networkPolicy:
+  # -- Create an ingress-only NetworkPolicy for PostgreSQL pods
+  enabled: false
+  ingress:
+    # -- Allow ingress from the same namespace
+    allowSameNamespace: true
+    # -- Additional ingress "from" rules appended to the generated policy
+    extraFrom: []
+  egress:
+    # -- Add explicit egress rules to the NetworkPolicy.
+    enabled: false
+    # -- Additional egress rules appended to the generated policy.
+    extraTo: []
+    # -- Allow DNS egress on TCP/UDP 53.
+    allowDNS: true
+    # -- Allow PostgreSQL egress to same-namespace pods for replication and internal checks.
+    allowSameNamespacePostgreSQL: true
+    # -- Allow HTTPS egress for S3-compatible backup endpoints.
+    allowHTTPS: true
+
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+
+pdb:
+  # -- Enable PodDisruptionBudget
+  enabled: false
+  # -- Minimum available pods when PDB is enabled
+  minAvailable: 1
+  # -- Maximum unavailable pods when PDB is enabled
+  maxUnavailable: ""
+
+# =============================================================================
+# Service Account
+# =============================================================================
+
+serviceAccount:
+  # -- Create a ServiceAccount
+  create: false
+  name: ""
+  annotations: {}
+  # -- Mount Kubernetes API credentials into PostgreSQL and backup pods.
+  automountServiceAccountToken: false
+
+# =============================================================================
+# Probes
+# =============================================================================
+
+livenessProbe:
+  # -- Enable livenessProbe
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  # -- Enable readinessProbe
+  enabled: true
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+startupProbe:
+  # -- Enable startupProbe
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 60
+
+# =============================================================================
+# Scheduling and Security
+# =============================================================================
+
+podSecurityContext:
+  fsGroup: 999
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsUser: 999
+  runAsGroup: 999
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+podLabels: {}
+podAnnotations: {}
+annotations: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+priorityClassName: ""
+terminationGracePeriodSeconds: 120
+
+# =============================================================================
+# Extra
+# =============================================================================
+
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []

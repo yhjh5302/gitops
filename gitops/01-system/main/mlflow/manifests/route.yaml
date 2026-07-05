@@ -1,0 +1,27 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mlflow-route
+  namespace: mlflow
+spec:
+  parentRefs:
+  - name: management-gateway
+    namespace: istio-system
+  hostnames:
+  - "mlflow.jin-server.com"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /oauth2/
+    backendRefs:
+    - name: oauth2-proxy
+      namespace: oauth2-proxy
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: mlflow
+      port: 80 # MLflow service port

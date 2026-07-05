@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-opentelemetry-collector
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/opentelemetry-collector
+    helm:
+      releaseName: opentelemetry-collector
+      values: |
+        mode: daemonset
+        image:
+          repository: "otel/opentelemetry-collector-contrib"
+        service:
+          enabled: true
+        presets:
+          logsCollection:
+            enabled: true
+            storeCheckpoints: true
+          kubernetesAttributes:
+            enabled: true
+        config:
+          exporters:
+            otlphttp/victoriametrics:
+              metrics_endpoint: "http://vminsert-victoria-metrics.victoria-metrics.svc:8480/insert/0/opentelemetry/v1/metrics"
+              traces_endpoint: "http://vminsert-victoria-metrics.victoria-metrics.svc:8480/insert/0/opentelemetry/v1/traces"
+            otlphttp/victorialogs:
+              logs_endpoint: "http://victoria-logs-victoria-logs-cluster-vlinsert.victoria-metrics.svc:9481/insert/opentelemetry/v1/logs"
+          service:
+            pipelines:
+              logs:
+                receivers: [filelog, otlp]
+                processors: [memory_limiter, k8sattributes, batch]
+                exporters: [otlphttp/victorialogs]
+              metrics:
+                receivers: [otlp, prometheus]
+                processors: [memory_limiter, k8sattributes, batch]
+                exporters: [otlphttp/victoriametrics]
+              traces:
+                receivers: [otlp, jaeger, zipkin]
+                processors: [memory_limiter, k8sattributes, batch]
+                exporters: [otlphttp/victoriametrics]
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: victoria-metrics
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

@@ -1,0 +1,23 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: platform-gateway-auth
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: management-gateway
+  action: CUSTOM
+  provider:
+    name: oauth2-proxy
+  rules:
+  - to:
+    - operation:
+        notHosts:
+        - keycloak.jin-server.com
+        - argocd.jin-server.com
+        - grafana.jin-server.com
+        - workflows.jin-server.com
+        - vault.jin-server.com
+        notPaths:
+        - /oauth2/*

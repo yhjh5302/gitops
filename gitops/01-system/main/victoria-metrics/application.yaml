@@ -1,0 +1,83 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-victoria-metrics
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/victoria-metrics
+    helm:
+      releaseName: victoria-metrics
+      skipCrds: true # CRDs pre-installed via bootstrap
+      values: |
+        fullnameOverride: "victoria-metrics"
+        syncJob:
+          enabled: false
+        vmsingle:
+          enabled: false
+        vmcluster:
+          enabled: true
+          spec:
+            retentionPeriod: "1" # 1 month data retention
+            vmstorage:
+              replicaCount: 1
+              storage:
+                volumeClaimTemplate:
+                  spec:
+                    accessModes:
+                    - ReadWriteOnce
+                    resources:
+                      requests:
+                        storage: 100Gi
+            vminsert:
+              replicaCount: 1
+            vmselect:
+              replicaCount: 1
+        # Enable Prometheus-compatible agent
+        vmagent:
+          enabled: true
+          spec:
+            selectAllByDefault: true # Automatically collect from all ServiceMonitors
+        prometheus-node-exporter:
+          hostRootFsMount:
+            mountPropagation: HostToContainer
+        # Configure Alertmanager
+        vmalertmanager:
+          enabled: true
+        # Enable Grafana dashboards
+        grafana:
+          enabled: true
+          admin:
+            existingSecret: "grafana-secrets"
+            userKey: "admin-user"
+            passwordKey: "admin-password"
+          envFromSecret: "grafana-secrets"
+          grafana.ini:
+            server:
+              domain: grafana.jin-server.com
+              root_url: https://grafana.jin-server.com/
+            auth.generic_oauth:
+              enabled: true
+              name: Keycloak
+              allow_sign_up: true
+              client_id: grafana
+              scopes: openid profile email
+              auth_url: https://keycloak.jin-server.com/realms/platform/protocol/openid-connect/auth
+              token_url: http://keycloak.keycloak.svc:8080/realms/platform/protocol/openid-connect/token
+              api_url: http://keycloak.keycloak.svc:8080/realms/platform/protocol/openid-connect/userinfo
+              role_attribute_path: contains(groups, '/platform-admin') && 'Admin' || contains(groups, 'platform-admin') && 'Admin' || contains(groups, 'grafana-admin') && 'Admin' || contains(groups, 'grafana-editor') && 'Editor' || 'Viewer'
+              auto_login: true
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: victoria-metrics
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

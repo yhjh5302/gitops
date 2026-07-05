@@ -1,0 +1,71 @@
+# IDE and Editor Files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+.DS_Store
+
+# Secrets and Sensitive Data (CRITICAL for GitOps)
+# Prevent committing unencrypted secrets, tokens, and certificates
+*.env
+*.env.local
+*.env.*.local
+*.secret
+*.secrets
+*.key
+*.pem
+*.pub
+*.cert
+*.crt
+*.pfx
+*.p12
+
+# Terraform and Infrastructure state (if applicable)
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Helm charts and dependencies
+# Often charts are downloaded/packaged locally during testing
+charts/*.tgz
+charts/tmp/
+.helm/
+
+# Local Temporary Files
+tmp/
+temp/
+scratch/
+*.log
+
+# Language-specific local environment (Python/Node if used for local scripts)
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.env/
+venv/
+ENV/
+
+# Host mapping secrets exclusion
+infra/kubeadm/hosts.map
+
+# Untracked Vault configuration secrets
+infra/common/vault-config.env
+infra/common/vault-keys.json
+
+# Local private directory for untracked configurations and credentials
+secret/
+
+# Standalone manual deployment manifests (contains sensitive cluster-admin bindings)
+code-server.yaml

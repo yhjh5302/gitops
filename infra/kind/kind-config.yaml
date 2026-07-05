@@ -1,0 +1,30 @@
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+networking:
+  podSubnet: "10.233.0.0/16"
+  serviceSubnet: "10.234.0.0/16"
+  disableDefaultCNI: true # for cilium
+  kubeProxyMode: "none" # for cilium
+nodes:
+- role: control-plane
+  image: kindest/node:v1.35.6
+  # extraMounts:
+  # - hostPath: /Users/uplus/Downloads/LGUPLUS_CERT.crt
+  #   containerPath: /etc/ssl/certs/LGUPLUS_CERT.pem
+- role: worker
+  image: kindest/node:v1.35.6
+  # extraMounts:
+  # - hostPath: /Users/uplus/Downloads/LGUPLUS_CERT.crt
+  #   containerPath: /etc/ssl/certs/LGUPLUS_CERT.pem
+- role: worker
+  image: kindest/node:v1.35.6
+  # extraMounts:
+  # - hostPath: /Users/uplus/Downloads/LGUPLUS_CERT.crt
+  #   containerPath: /etc/ssl/certs/LGUPLUS_CERT.pem
+kubeadmConfigPatches:
+- |
+  apiVersion: kubelet.config.k8s.io/v1beta1
+  kind: KubeletConfiguration
+  maxPods: 128
+  serverTLSBootstrap: true
+  rotateCertificates: true

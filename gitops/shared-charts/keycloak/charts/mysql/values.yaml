@@ -1,0 +1,490 @@
+# SPDX-License-Identifier: Apache-2.0
+# =============================================================================
+# MySQL Helm Chart - Default Values
+# =============================================================================
+# Supported architectures:
+# - standalone
+# - replication
+
+# -- MySQL deployment mode: standalone | replication
+architecture: standalone
+
+# -- Override chart name
+nameOverride: ""
+# -- Override full release name
+fullnameOverride: ""
+
+# -- Labels added to all resources
+commonLabels: {}
+
+# -- Kubernetes cluster domain
+clusterDomain: cluster.local
+
+# =============================================================================
+# Image
+# =============================================================================
+
+image:
+  # -- MySQL image repository
+  repository: docker.io/library/mysql
+  # -- MySQL image tag
+  tag: "9.7.1"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# =============================================================================
+# Authentication
+# =============================================================================
+
+auth:
+  # -- MySQL root password. Auto-generated if empty and no existingSecret is set.
+  rootPassword: ""
+  # -- Application database created on first bootstrap
+  database: app
+  # -- Application user created on first bootstrap
+  username: app
+  # -- Application user password. Auto-generated if empty and no existingSecret is set.
+  password: ""
+  # -- Replication user used by read replicas
+  replicationUsername: replicator
+  # -- Replication user password. Auto-generated if empty and no existingSecret is set.
+  replicationPassword: ""
+  # -- Existing secret with MySQL passwords
+  existingSecret: ""
+  # -- Usernames and database names remain regular values on purpose. This chart only reads secrets for sensitive runtime data and does not use secrets to override usernames or database names.
+  # -- Secret key for the MySQL root password in auth.existingSecret
+  existingSecretRootPasswordKey: mysql-root-password
+  # -- Secret key for the application user password in auth.existingSecret
+  existingSecretUserPasswordKey: mysql-user-password
+  # -- Secret key for the replication user password in auth.existingSecret
+  existingSecretReplicationPasswordKey: mysql-replication-password
+
+# =============================================================================
+# MySQL Configuration
+# =============================================================================
+
+config:
+  # -- Optional configuration preset: none | small | medium | large | oltp | read-heavy | analytics
+  preset: none
+  # -- Extra my.cnf content appended to the generated configuration
+  myCnf: ""
+
+# =============================================================================
+# Initialization
+# =============================================================================
+
+initdb:
+  # -- Additional init scripts written into docker-entrypoint-initdb.d
+  scripts: {}
+    # 10-extra.sql: |
+    #   CREATE TABLE IF NOT EXISTS example (id INT PRIMARY KEY);
+  # -- Existing ConfigMap mounted into docker-entrypoint-initdb.d in addition to the generated scripts
+  existingConfigMap: ""
+
+# =============================================================================
+# Standalone
+# =============================================================================
+
+standalone:
+  # -- Server ID used in standalone mode
+  serverId: 1
+  # -- Optional resource preset: none | small | medium | large
+  resourcesPreset: none
+  persistence:
+    # -- Enable PVC for standalone mode
+    enabled: true
+    # -- Storage class for standalone PVC
+    storageClass: ""
+    # -- Access modes for standalone PVC
+    accessModes:
+      - ReadWriteOnce
+    # -- PVC size for standalone mode
+    size: 8Gi
+  # -- Resources for standalone MySQL
+  resources: {}
+
+# =============================================================================
+# Replication
+# =============================================================================
+
+replication:
+  source:
+    # -- Server ID used by the source pod
+    serverId: 1
+    # -- Optional resource preset: none | small | medium | large
+    resourcesPreset: none
+    persistence:
+      # -- Enable PVC for the source StatefulSet
+      enabled: true
+      # -- Storage class for source PVCs
+      storageClass: ""
+      # -- Access modes for source PVCs
+      accessModes:
+        - ReadWriteOnce
+      # -- PVC size for the source pod
+      size: 20Gi
+    # -- Resources for the source MySQL pod
+    resources: {}
+    probes:
+      # -- In replication mode, require the source readiness check to confirm the pod is writable
+      requireWritable: true
+  readReplicas:
+    # -- Base server ID used to derive replica server IDs from pod ordinal
+    serverIdBase: 100
+    # -- Optional resource preset: none | small | medium | large
+    resourcesPreset: none
+    # -- Number of read replica pods
+    replicaCount: 2
+    persistence:
+      # -- Enable PVCs for read replicas
+      enabled: true
+      # -- Storage class for replica PVCs
+      storageClass: ""
+      # -- Access modes for replica PVCs
+      accessModes:
+        - ReadWriteOnce
+      # -- PVC size per read replica
+      size: 20Gi
+    # -- Resources for read replica pods
+    resources: {}
+    probes:
+      # -- In replication mode, require replica readiness to confirm the pod is read-only
+      requireReadOnly: true
+      # -- Optionally require the replica readiness check to confirm IO and SQL replication threads are running
+      requireRunningReplication: false
+  binlog:
+    # -- Binlog format used by the source
+    format: ROW
+    # -- Binlog retention in whole days. When greater than zero, this overrides expireLogsSeconds in the generated config.
+    retentionDays: 7
+    # -- Binlog expiration in seconds
+    expireLogsSeconds: 604800
+    # -- sync_binlog value used by the source
+    syncBinlog: 1
+  replicaTuning:
+    # -- Number of parallel applier workers on replicas
+    parallelWorkers: 4
+  pdb:
+    # -- Enable a PodDisruptionBudget by default in replication mode
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+  scheduling:
+    # -- Enable opinionated default placement rules in replication mode when global affinity/topologySpreadConstraints are empty
+    enableDefaultPodAntiAffinity: true
+    enableDefaultTopologySpread: true
+    topologyKey: kubernetes.io/hostname
+
+# =============================================================================
+# Service
+# =============================================================================
+
+service:
+  # -- Service type for MySQL client access
+  type: ClusterIP
+  annotations: {}
+  sourceAnnotations: {}
+  replicasAnnotations: {}
+  # -- MySQL listener port
+  port: 3306
+  # -- Metrics port exposed when metrics.enabled=true
+  metricsPort: 9104
+  # -- Service IP family policy: SingleStack | PreferDualStack | RequireDualStack. Empty uses cluster default.
+  ipFamilyPolicy: ""
+  # -- Ordered list of IP families for the Service: IPv4 | IPv6. Empty uses cluster default.
+  ipFamilies: []
+
+# =============================================================================
+# Metrics
+# =============================================================================
+
+metrics:
+  # -- Enable mysqld-exporter sidecar
+  enabled: false
+  # -- Optional resource preset for mysqld-exporter: none | small | medium
+  resourcesPreset: none
+  service:
+    # -- Annotations applied to metrics Services
+    annotations: {}
+  image:
+    # -- mysqld-exporter image repository
+    repository: docker.io/prom/mysqld-exporter
+    # -- mysqld-exporter image tag
+    tag: "v0.17.2"
+    pullPolicy: IfNotPresent
+  # -- Resources for mysqld-exporter
+  resources: {}
+  serviceMonitor:
+    # -- Create a ServiceMonitor (requires Prometheus Operator)
+    enabled: false
+    interval: 30s
+    labels: {}
+
+# =============================================================================
+# TLS
+# =============================================================================
+
+tls:
+  # -- Enable MySQL server TLS using certificates from tls.existingSecret
+  enabled: false
+  # -- Existing Secret containing TLS material for the MySQL server
+  existingSecret: ""
+  # -- Secret key for the CA certificate in tls.existingSecret
+  caFilename: ca.crt
+  # -- Secret key for the server certificate in tls.existingSecret
+  certFilename: tls.crt
+  # -- Secret key for the server private key in tls.existingSecret
+  keyFilename: tls.key
+  # -- Require TLS for TCP client connections handled by mysqld
+  requireSecureTransport: false
+  volumePermissions:
+    # -- Copy TLS files to an emptyDir and normalize ownership/mode before mysqld starts. This is useful when Secrets are projected with modes that MySQL rejects for private keys.
+    enabled: false
+  client:
+    # -- Enable TLS for internal chart-managed TCP clients such as replication bootstrap commands
+    enabled: false
+    # -- SSL mode used by mysql CLI tools when tls.client.enabled=true: PREFERRED | REQUIRED | VERIFY_CA
+    sslMode: REQUIRED
+
+# =============================================================================
+# Backup
+# =============================================================================
+
+backup:
+  # -- Enable built-in backup CronJob support
+  enabled: false
+  # -- Backup schedule in Cron format
+  schedule: "0 3 * * *"
+  # -- Suspend backup execution
+  suspend: false
+  # -- CronJob concurrency policy
+  concurrencyPolicy: Forbid
+  # -- Successful job history retained by the CronJob
+  successfulJobsHistoryLimit: 3
+  # -- Failed job history retained by the CronJob
+  failedJobsHistoryLimit: 3
+  # -- Job backoff limit
+  backoffLimit: 1
+  # -- Prefix used in generated backup archive names
+  archivePrefix: mysql
+  # -- Resources applied to the backup dump and upload containers
+  resources: {}
+  images:
+    uploader:
+      repository: docker.io/helmforge/mc
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    mysql:
+      repository: docker.io/library/mysql
+      tag: "9.7.1"
+      pullPolicy: IfNotPresent
+  s3:
+    # -- S3-compatible endpoint URL, for example: https://s3.amazonaws.com or https://minio.example.com
+    endpoint: ""
+    # -- Target bucket name
+    bucket: ""
+    # -- Optional key prefix inside the bucket
+    prefix: mysql
+    # -- Create the bucket automatically when it does not exist yet
+    createBucketIfNotExists: true
+    # -- Existing secret containing access-key and secret-key
+    existingSecret: ""
+    # -- Secret key name for the access key inside backup.s3.existingSecret
+    existingSecretAccessKeyKey: access-key
+    # -- Secret key name for the secret key inside backup.s3.existingSecret
+    existingSecretSecretKeyKey: secret-key
+    # -- Inline access key used when backup.s3.existingSecret is not set
+    accessKey: ""
+    # -- Inline secret key used when backup.s3.existingSecret is not set
+    secretKey: ""
+  database:
+    # -- Extra arguments passed to mysqldump before the built-in --all-databases flag
+    mysqldumpArgs: "--single-transaction --quick --skip-lock-tables --no-tablespaces --routines --events --triggers"
+
+# =============================================================================
+# NetworkPolicy
+# =============================================================================
+
+networkPolicy:
+  # -- Create a NetworkPolicy for MySQL pods
+  enabled: false
+  ingress:
+    # -- Allow ingress from the same namespace
+    allowSameNamespace: true
+    # -- Additional ingress "from" rules appended to the generated policy
+    extraFrom: []
+  metrics:
+    # -- Allow ingress to the metrics port when metrics.enabled=true
+    enabled: false
+    # -- Allow metrics scraping from the same namespace
+    allowSameNamespace: true
+    # -- Additional ingress "from" rules appended to the generated metrics policy rule
+    extraFrom: []
+  egress:
+    # -- Add egress rules to the NetworkPolicy. Disabled keeps Kubernetes/CNI default behavior for egress.
+    enabled: false
+    # -- Allow DNS egress to kube-dns/CoreDNS.
+    allowDNS: true
+    # -- Allow MySQL egress to pods in the same namespace for source/replica and client sidecars.
+    allowSameNamespaceMySQL: true
+    # -- Allow TCP/443 egress for object storage, external secret stores, or monitored endpoints reached by sidecars/jobs.
+    allowHTTPS: false
+    # -- Additional egress "to" rules appended to the generated policy.
+    extraTo: []
+
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+
+pdb:
+  # -- Enable PodDisruptionBudget
+  enabled: false
+  # -- Minimum available pods when PDB is enabled
+  minAvailable: 1
+  # -- Maximum unavailable pods when PDB is enabled
+  maxUnavailable: ""
+
+# =============================================================================
+# Service Account
+# =============================================================================
+
+serviceAccount:
+  # -- Create a ServiceAccount
+  create: false
+  name: ""
+  annotations: {}
+  # -- Mount the ServiceAccount token into workload pods. Keep false unless a sidecar or extension needs Kubernetes API access.
+  automountServiceAccountToken: false
+
+# =============================================================================
+# Probes
+# =============================================================================
+
+livenessProbe:
+  # -- Enable livenessProbe
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  # -- Enable readinessProbe
+  enabled: true
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+startupProbe:
+  # -- Enable startupProbe
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 60
+
+# =============================================================================
+# Scheduling and Security
+# =============================================================================
+
+podSecurityContext:
+  fsGroup: 999
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsUser: 999
+  runAsGroup: 999
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+podLabels: {}
+podAnnotations: {}
+annotations: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+priorityClassName: ""
+terminationGracePeriodSeconds: 120
+
+# =============================================================================
+# Extra
+# =============================================================================
+
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []
+# -- Extra Kubernetes manifests rendered after chart resources. Use for small companion resources such as CI fixture Secrets or namespace-local ConfigMaps.
+extraManifests: []
+
+# =============================================================================
+# External Secrets Operator
+# =============================================================================
+
+externalSecrets:
+  # -- Render ExternalSecret resources for clusters running External Secrets Operator.
+  enabled: false
+  # -- ExternalSecret apiVersion.
+  apiVersion: external-secrets.io/v1
+  # -- Refresh interval.
+  refreshInterval: 1h
+  secretStoreRef:
+    # -- Existing SecretStore or ClusterSecretStore name.
+    name: ""
+    kind: SecretStore
+  target:
+    creationPolicy: Owner
+  # -- Legacy ExternalSecret data entries for MySQL passwords. Prefer externalSecrets.auth for new installs.
+  data: []
+  #   - secretKey: mysql-root-password
+  #     remoteRef:
+  #       key: mysql/credentials
+  #       property: root-password
+  auth:
+    # -- Manage the MySQL auth Secret with External Secrets Operator.
+    enabled: false
+    # -- Target Kubernetes Secret name. Empty defaults to <release>-mysql-auth.
+    targetName: ""
+    rootPasswordRemoteRef: {}
+      # key: prod/mysql
+      # property: root-password
+    userPasswordRemoteRef: {}
+      # key: prod/mysql
+      # property: user-password
+    replicationPasswordRemoteRef: {}
+      # key: prod/mysql
+      # property: replication-password
+  tls:
+    # -- Manage the MySQL TLS Secret with External Secrets Operator.
+    enabled: false
+    # -- Target Kubernetes Secret name. Empty defaults to <release>-mysql-tls.
+    targetName: ""
+    caRemoteRef: {}
+      # key: prod/mysql-tls
+      # property: ca.crt
+    certRemoteRef: {}
+      # key: prod/mysql-tls
+      # property: tls.crt
+    keyRemoteRef: {}
+      # key: prod/mysql-tls
+      # property: tls.key
+  backup:
+    # -- Manage the backup object-storage Secret with External Secrets Operator.
+    enabled: false
+    # -- Target Kubernetes Secret name. Empty defaults to <release>-mysql-backup.
+    targetName: ""
+    accessKeyRemoteRef: {}
+      # key: prod/mysql-backup
+      # property: access-key
+    secretKeyRemoteRef: {}
+      # key: prod/mysql-backup
+      # property: secret-key

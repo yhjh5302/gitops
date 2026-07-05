@@ -1,0 +1,23 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: oauth2-proxy-grant
+  namespace: oauth2-proxy
+spec:
+  from:
+  - group: gateway.kgateway.dev
+    kind: GatewayExtension
+    namespace: kgateway
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: private-assistant
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: code-server
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: mlflow
+  to:
+  - group: ""
+    kind: Service
+    name: oauth2-proxy

@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kubelet-csr-approver-cronjob
+  namespace: kube-system
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: kubelet-csr-approver-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: approver
+            image: alpine/k8s:1.35.6
+            command:
+            - /bin/sh
+            - -c
+            - |
+              PENDING_CSRS=$(kubectl get csr 2>/dev/null | grep -i 'Pending' | awk '{print $1}' || echo '')
+              if [ -n "${PENDING_CSRS}" ]; then
+                echo "[INFO] Found pending CSRs to approve:"
+                echo "${PENDING_CSRS}"
+                echo "${PENDING_CSRS}" | xargs -r kubectl certificate approve
+              else
+                echo "[INFO] No pending CSRs found at this moment."
+              fi

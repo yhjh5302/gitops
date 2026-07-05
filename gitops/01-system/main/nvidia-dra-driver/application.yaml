@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-nvidia-dra-driver
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # Run after GPU Operator is ready
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/nvidia-dra-driver
+    helm:
+      releaseName: nvidia-dra-driver
+      skipCrds: false
+      values: |
+        gpuResourcesEnabledOverride: true
+        allowDefaultNamespace: true
+        featureGates:
+          MPSSupport: true
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: dra-driver-nvidia-gpu
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+  ignoreDifferences:
+  - group: resource.k8s.io
+    kind: DeviceClass
+    jsonPointers:
+    - /spec/extendedResourceName

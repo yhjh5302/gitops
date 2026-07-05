@@ -1,0 +1,15 @@
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: ListenerPolicy
+metadata:
+  name: gateway-websocket-policy
+  namespace: kgateway
+spec:
+  default:
+    httpSettings:
+      upgradeConfig:
+        enabledUpgrades:
+        - websocket
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: service-gateway

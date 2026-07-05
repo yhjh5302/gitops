@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sub-argo-workflows
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # Run after database and secrets are ready
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/shared-charts/argo-workflows
+    helm:
+      releaseName: argo-workflows
+      skipCrds: true
+      values: |
+        server:
+          extraArgs:
+          - --auth-mode=sso
+          sso:
+            enabled: true
+            issuer: https://keycloak.jin-server.com/realms/platform
+            redirectUrl: https://workflows.jin-server.com/oauth2/callback
+        controller:
+          workflowNamespaces:
+          - argo-workflows
+          - private-assistant
+          persistence:
+            connectionPool:
+              maxIdleConns: 100
+              maxOpenConns: 100
+            archive: true
+            postgresql:
+              host: postgres.postgres.svc
+              port: 5432
+              database: argo_workflows
+              tableName: argo_workflows
+              userNameSecret:
+                name: argo-workflows-db-secrets
+                key: database-username
+              passwordSecret:
+                name: argo-workflows-db-secrets
+                key: database-password
+  destination:
+    server: '{{server}}'
+    namespace: argo-workflows
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
