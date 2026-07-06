@@ -1,7 +1,7 @@
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMServiceScrape
 metadata:
-  name: nvidia-dcgm-exporter
+  name: victoria-metrics-dcgm-exporter
   namespace: victoria-metrics
   labels:
     app.kubernetes.io/instance: victoria-metrics
@@ -13,7 +13,7 @@ spec:
       app: nvidia-dcgm-exporter
   namespaceSelector:
     matchNamespaces:
-    - gpu-operator
+      - gpu-operator
   endpoints:
-  - port: gpu-metrics
-    interval: 5s
+    - port: gpu-metrics
+      interval: 5s
