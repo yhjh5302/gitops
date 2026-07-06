@@ -12,7 +12,7 @@ spec:
     matchLabels:
       app: nvidia-dcgm-exporter
   namespaceSelector:
-    matchNamespaces:
+    matchNames:
       - gpu-operator
   endpoints:
     - port: gpu-metrics
