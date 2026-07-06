@@ -19,6 +19,8 @@ spec:
         image:
           repository: burakince/mlflow
           tag: "3.13.0"
+        extraEnvVars:
+          MLFLOW_SERVER_ALLOWED_HOSTS: "*"
         backendStore:
           postgres:
             enabled: true
