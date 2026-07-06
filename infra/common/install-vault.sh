@@ -32,13 +32,9 @@ kubectl create namespace vault --dry-run=client -o yaml | kubectl apply -f -
 # Webhook 충돌 오류 방지를 위해 기존 MutatingWebhookConfiguration 삭제
 kubectl delete mutatingwebhookconfiguration vault-agent-injector-cfg --ignore-not-found=true &>/dev/null
 
-# 노드 수 감지하여 싱글 노드 최적화 (HA 모드이되 단일 노드인 경우 복제본 수를 1로 조절하여 안티 어피니티 스케줄링 충돌을 예방)
-NODE_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | wc -l || echo "1")
-EXTRA_VAULT_ARGS=()
-if [ "${NODE_COUNT}" -eq 1 ]; then
-  echo " -> 싱글 노드 클러스터 감지: Vault 복제본(replicas)을 1개로 조정합니다."
-  EXTRA_VAULT_ARGS+=("--set" "server.ha.replicas=1")
-fi
+# 단중화 최적화: 복제본(replicas)을 1개로 고정하여 단일 Pod로 구동합니다.
+echo " -> Vault 복제본(replicas)을 1개로 설정하여 단중화(Standalone)로 구성합니다."
+EXTRA_VAULT_ARGS=("--set" "server.ha.replicas=1")
 
 # 운영 환경 모드 설정:
 # server.dev.enabled=false (개발 모드 비활성화)

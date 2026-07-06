@@ -39,13 +39,13 @@ spec:
                   name: private-assistant-secrets
                   key: huggingface-token
           args:
-            - "google/gemma-4-12b-it"
+            - "Qwen/Qwen3.5-9B"
             - --host
             - "0.0.0.0"
             - --port
             - "8000"
             - --gpu-memory-utilization
-            - "0.90"
+            - "0.92"
             - --max-model-len
             - "32768"
             - --max-num-seqs
@@ -54,12 +54,13 @@ spec:
             - "fp8"
             - --kv-cache-dtype
             - "fp8"
+            - --enforce-eager
             - --language-model-only
             - --enable-auto-tool-choice
             - --tool-call-parser
-            - "hermes"
+            - "qwen3_coder"
             - --served-model-name
-            - "gemma-4-12b-it"
+            - "qwen-3.5-9b"
             - --trust-remote-code
           ports:
             - containerPort: 8000
