@@ -43,6 +43,7 @@ spec:
           enabled: true
           spec:
             selectAllByDefault: true # Automatically collect from all ServiceMonitors
+            scrapeInterval: "5s"
         prometheus-node-exporter:
           hostRootFsMount:
             mountPropagation: HostToContainer
