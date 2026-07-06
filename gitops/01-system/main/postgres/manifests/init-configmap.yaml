@@ -12,6 +12,7 @@ data:
         CREATE DATABASE keycloak;
         CREATE DATABASE mlflow;
         CREATE DATABASE argo_workflows;
+        CREATE DATABASE private_assistant;
 
         CREATE USER keycloak WITH PASSWORD '$KEYCLOAK_DB_PASSWORD';
         GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
@@ -29,4 +30,10 @@ data:
         GRANT ALL PRIVILEGES ON DATABASE argo_workflows TO argo_workflows;
         \c argo_workflows;
         GRANT ALL ON SCHEMA public TO argo_workflows;
+
+        \c postgres;
+        CREATE USER private_assistant WITH PASSWORD '$PRIVATE_ASSISTANT_DB_PASSWORD';
+        GRANT ALL PRIVILEGES ON DATABASE private_assistant TO private_assistant;
+        \c private_assistant;
+        GRANT ALL ON SCHEMA public TO private_assistant;
     EOSQL

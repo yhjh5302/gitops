@@ -124,14 +124,14 @@ if [ -f "${CONFIG_FILE}" ]; then
   # Vault에 데이터베이스 및 애플리케이션 비밀번호 주입
   echo " -> 데이터베이스 및 애플리케이션용 시크릿을 Vault에 적재하는 중..."
   kubectl exec -n vault vault-0 -- vault kv put secret/postgres postgres-password="${POSTGRES_PASSWORD:-postgres_pass}" &>/dev/null
-  kubectl exec -n vault vault-0 -- vault kv put secret/mlflow database-password="${MLFLOW_DB_PASSWORD:-mlflow_pass}" &>/dev/null
+  kubectl exec -n vault vault-0 -- vault kv put secret/mlflow database-username="${MLFLOW_DB_USERNAME:-mlflow}" database-password="${MLFLOW_DB_PASSWORD:-mlflow_pass}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/redis redis-password="${REDIS_PASSWORD:-redis_pass}" &>/dev/null
-  kubectl exec -n vault vault-0 -- vault kv put secret/keycloak admin-username="${KEYCLOAK_ADMIN_USERNAME:-yhjh5302@gmail.com}" admin-password="${KEYCLOAK_ADMIN_PASSWORD:-keycloak_admin_pass}" database-password="${KEYCLOAK_DB_PASSWORD:-keycloak_pass}" trusted-addresses="${TRUSTED_ADDRESSES:-10.233.0.0/16,127.0.0.0/8}" google-client-id="${GOOGLE_CLIENT_ID:-}" google-client-secret="${GOOGLE_CLIENT_SECRET:-}" &>/dev/null
+  kubectl exec -n vault vault-0 -- vault kv put secret/keycloak database-username="${KEYCLOAK_DB_USERNAME:-keycloak}" admin-username="${KEYCLOAK_ADMIN_USERNAME:-yhjh5302@gmail.com}" admin-password="${KEYCLOAK_ADMIN_PASSWORD:-keycloak_admin_pass}" database-password="${KEYCLOAK_DB_PASSWORD:-keycloak_pass}" trusted-addresses="${TRUSTED_ADDRESSES:-10.233.0.0/16,127.0.0.0/8}" google-client-id="${GOOGLE_CLIENT_ID:-}" google-client-secret="${GOOGLE_CLIENT_SECRET:-}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/argo-workflows database-username="${ARGO_DB_USERNAME:-argo_workflows}" database-password="${ARGO_DB_PASSWORD:-argo_workflows_pass}" client-secret="${ARGO_WORKFLOWS_CLIENT_SECRET:-argo_workflows_client_secret_placeholder}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/oauth2-proxy client-id="${OAUTH2_CLIENT_ID:-platform}" client-secret="${OAUTH2_CLIENT_SECRET:-oauth2_client_secret_placeholder}" cookie-secret="${OAUTH2_COOKIE_SECRET:-oauth2_cookie_secret_placeholder_long_string}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/argocd client-secret="${ARGOCD_CLIENT_SECRET:-argocd_client_secret_placeholder}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/grafana client-secret="${GRAFANA_CLIENT_SECRET:-grafana_client_secret_placeholder}" admin-password="${GRAFANA_ADMIN_PASSWORD:-}" &>/dev/null
-  kubectl exec -n vault vault-0 -- vault kv put secret/private-assistant huggingface-token="${HF_TOKEN:-huggingface_token_placeholder}" &>/dev/null
+  kubectl exec -n vault vault-0 -- vault kv put secret/private-assistant huggingface-token="${HF_TOKEN:-huggingface_token_placeholder}" db-user="${PRIVATE_ASSISTANT_DB_USERNAME:-private_assistant}" database-password="${PRIVATE_ASSISTANT_DB_PASSWORD:-}" &>/dev/null
 
   echo " -> ✓ 자격증명, 웹훅 및 데이터베이스 시크릿이 Vault에 안전하게 적재되었습니다."
 else

@@ -56,6 +56,11 @@ spec:
             secretKeyRef:
               name: postgres-secrets
               key: argo-database-password
+        - name: PRIVATE_ASSISTANT_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: private-assistant-database-password
         ports:
         - containerPort: 5432
           name: postgres

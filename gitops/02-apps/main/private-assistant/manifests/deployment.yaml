@@ -22,11 +22,22 @@ spec:
           value: "http://qwen-inference.private-assistant.svc:8000/v1"
         - name: HIGGS_API_URL
           value: "http://higgs-serving.private-assistant.svc:8000"  # Unified Higgs ASR/TTS API URL
-        - name: DB_URL
+        - name: DB_HOST
+          value: "postgres.postgres.svc"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "private_assistant"
+        - name: DB_USER
           valueFrom:
             secretKeyRef:
               name: private-assistant-secrets
-              key: db-url
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: private-assistant-secrets
+              key: db-password
         - name: HF_TOKEN
           valueFrom:
             secretKeyRef:
