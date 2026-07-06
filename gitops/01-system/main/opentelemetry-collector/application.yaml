@@ -13,6 +13,9 @@ spec:
       releaseName: opentelemetry-collector
       values: |
         mode: daemonset
+        tolerations:
+          - effect: NoSchedule
+            operator: Exists
         image:
           repository: "otel/opentelemetry-collector-contrib"
         service:
