@@ -34,7 +34,6 @@ PRIVATE_ASSISTANT_DB_PASS=$(openssl rand -hex 16)
 # 3. env 파일의 특정 비밀번호 라인들만 덮어쓰기 치환 (GITHUB_APP 관련 설정 보존)
 echo "3단계: vault-config.env에 난수 주입 중..."
 sed -i "s#^POSTGRES_PASSWORD=.*#POSTGRES_PASSWORD=\"${POSTGRES_PASS}\"#g" "${ENV_FILE}"
-sed -i "s#^KEYCLOAK_DB_USERNAME=.*#KEYCLOAK_DB_USERNAME=\"keycloak\"#g" "${ENV_FILE}"
 sed -i "s#^KEYCLOAK_DB_PASSWORD=.*#KEYCLOAK_DB_PASSWORD=\"${KEYCLOAK_DB_PASS}\"#g" "${ENV_FILE}"
 sed -i "s#^KEYCLOAK_ADMIN_USERNAME=.*#KEYCLOAK_ADMIN_USERNAME=\"yhjh5302@gmail.com\"#g" "${ENV_FILE}"
 sed -i "s#^KEYCLOAK_ADMIN_PASSWORD=.*#KEYCLOAK_ADMIN_PASSWORD=\"${KEYCLOAK_ADMIN_PASS}\"#g" "${ENV_FILE}"
