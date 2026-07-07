@@ -35,7 +35,7 @@ spec:
     matchNames:
       - istio-system
   podMetricsEndpoints:
-    - port: 15020
+    - port: "15020"
       path: /stats/prometheus
       interval: 5s
 ---
