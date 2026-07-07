@@ -357,3 +357,6 @@ spec:
     syncOptions:
     - CreateNamespace=true
     - SkipDryRunOnMissingResource=true
+    managedNamespaceMetadata:
+      labels:
+        istio.io/dataplane-mode: ambient
