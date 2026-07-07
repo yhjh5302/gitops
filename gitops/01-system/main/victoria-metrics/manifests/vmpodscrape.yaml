@@ -1,0 +1,20 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: victoria-metrics-istio-ztunnel
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app: ztunnel
+  namespaceSelector:
+    matchNames:
+      - istio-system
+  podMetricsEndpoints:
+    - port: "15020"
+      path: /stats/prometheus
+      interval: 5s
