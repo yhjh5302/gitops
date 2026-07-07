@@ -1,0 +1,31 @@
+# apiVersion: security.istio.io/v1beta1
+# kind: RequestAuthentication
+# metadata:
+#   name: platform-request-auth
+#   namespace: private-assistant
+# spec:
+#   jwtRules:
+#   - issuer: "https://keycloak.jin-server.com/realms/platform"
+#     jwksUri: "http://keycloak.keycloak.svc:8080/realms/platform/protocol/openid-connect/certs"
+# ---
+# apiVersion: security.istio.io/v1beta1
+# kind: AuthorizationPolicy
+# metadata:
+#   name: platform-workload-auth
+#   namespace: private-assistant
+# spec:
+#   action: ALLOW
+#   rules:
+#   # Allow requests carrying a validated Keycloak JWT principal
+#   - from:
+#     - source:
+#         requestPrincipals: ["*"]
+#   # Allow local health checks, metrics, and UDP/WebTransport Cozyvoice/Whisper serving channels
+#   - to:
+#     - operation:
+#         paths:
+#         - /healthz
+#         - /metrics
+#         - /socket.io/*
+#         - /webtransport
+#         - /ws
