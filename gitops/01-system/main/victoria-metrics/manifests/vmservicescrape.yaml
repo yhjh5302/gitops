@@ -17,3 +17,168 @@ spec:
   endpoints:
     - port: gpu-metrics
       interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: victoria-metrics-istio-ztunnel
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app: ztunnel
+  namespaceSelector:
+    matchNames:
+      - istio-system
+  podMetricsEndpoints:
+    - port: 15020
+      path: /stats/prometheus
+      interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-istiod
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app: istiod
+  namespaceSelector:
+    matchNames:
+      - istio-system
+  endpoints:
+    - port: http-monitoring
+      interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-keycloak
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+      app.kubernetes.io/component: management
+  namespaceSelector:
+    matchNames:
+      - keycloak
+  endpoints:
+    - port: management
+      interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-kgateway
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kgateway
+      kgateway: kgateway
+  namespaceSelector:
+    matchNames:
+      - kgateway
+  endpoints:
+    - port: metrics
+      interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-kyverno
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+  namespaceSelector:
+    matchNames:
+      - kyverno
+  endpoints:
+    - port: metrics-port
+      interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-oauth2-proxy
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: oauth2-proxy
+  namespaceSelector:
+    matchNames:
+      - oauth2-proxy
+  endpoints:
+    - port: metrics
+      interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-vault
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+  namespaceSelector:
+    matchNames:
+      - vault
+  endpoints:
+    - port: http
+      path: /v1/sys/metrics
+      interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-qwen-inference
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app: qwen-inference
+  namespaceSelector:
+    matchNames:
+      - private-assistant
+  endpoints:
+    - port: http
+      interval: 5s
+
