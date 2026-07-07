@@ -297,11 +297,6 @@ spec:
             existingSecret: "keycloak-env-secrets"
             existingSecretPasswordKey: "database-password"
         extraEnv:
-          - name: KC_DB_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: keycloak-env-secrets
-                key: database-username
           - name: KC_HOSTNAME_URL
             value: "https://keycloak.jin-server.com"
           - name: KC_PROXY_TRUSTED_ADDRESSES
