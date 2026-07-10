@@ -30,14 +30,14 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: whisper-server
-          image: fedirz/faster-whisper-server:latest-cuda
+          image: fedirz/faster-whisper-server:latest-cpu
           env:
             - name: WHISPER_MODEL
               value: "large-v3"
             - name: WHISPER_DEVICE
-              value: "cuda"
+              value: "cpu"
             - name: WHISPER_COMPUTE_TYPE
-              value: "float16"
+              value: "int8"
           ports:
             - containerPort: 8000
               name: http
@@ -62,13 +62,11 @@ spec:
             timeoutSeconds: 15
           resources:
             limits:
-              cpu: "4"
-              memory: "8Gi"
-              nvidia.com/gpu: 1
+              cpu: "16"
+              memory: "16Gi"
             requests:
-              cpu: "2"
-              memory: "4Gi"
-              nvidia.com/gpu: 1
+              cpu: "8"
+              memory: "8Gi"
           volumeMounts:
             - name: model-cache
               mountPath: /root/.cache/huggingface

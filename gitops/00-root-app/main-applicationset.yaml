@@ -11,6 +11,8 @@ spec:
       directories:
       - path: gitops/01-system/main/*
       - path: gitops/02-apps/main/*
+      - path: gitops/02-apps/main/gemma-serving
+        exclude: true
   template:
     metadata:
       name: 'root-main-{{path.basename}}'
