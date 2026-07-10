@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: qwen-inference
+  name: qwen-serving
   namespace: private-assistant
 spec:
   replicas: 1
@@ -9,11 +9,11 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: qwen-inference
+      app: qwen-serving
   template:
     metadata:
       labels:
-        app: qwen-inference
+        app: qwen-serving
     spec:
       affinity:
         nodeAffinity:
@@ -61,7 +61,6 @@ spec:
             - "qwen3_coder"
             - --served-model-name
             - "qwen-3.5-9b"
-            - --trust-remote-code
           ports:
             - containerPort: 8000
               name: http
@@ -86,13 +85,13 @@ spec:
             timeoutSeconds: 15
           resources:
             limits:
-              nvidia.com/gpu: 1
-              memory: "32Gi"
-              cpu: "32"
-            requests:
-              nvidia.com/gpu: 1
-              memory: "16Gi"
               cpu: "16"
+              memory: "32Gi"
+              nvidia.com/gpu: 1
+            requests:
+              cpu: "4"
+              memory: "12Gi"
+              nvidia.com/gpu: 1
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm

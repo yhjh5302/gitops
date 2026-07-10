@@ -1,18 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: main-higgs-serving
+  name: main-whisper-serving
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
   finalizers:
-  - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     repoURL: 'https://github.com/yhjh5302/gitops.git'
     targetRevision: HEAD
-    path: gitops/02-apps/main/higgs-serving/manifests
+    path: gitops/02-apps/main/whisper-serving/manifests
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: private-assistant
@@ -21,7 +21,8 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - CreateNamespace=true
+      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         istio.io/dataplane-mode: ambient

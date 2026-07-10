@@ -14,31 +14,32 @@ graph TB
         VM_M[Grafana / VictoriaMetrics]
         Keycloak_M[Keycloak]
         Gateway_M[Istio Ingress Gateway]
-        Gateway_S[K-Gateway Ingress Gateway]
+        Gateway_S[Istio Service Ingress Gateway]
         Backend["private-assistant<br/>(Go BE Server & Static FE)"]
     end
 
     subgraph Workload_Cluster_1["Workload GPU Cluster 1 (Persistent LLM)"]
         Gateway_W1[K-Gateway]
-        Qwen["qwen-inference<br/>(Qwen LLM via SGLang GPU)"]
+        Gemma["gemma-serving<br/>(Gemma LLM via vLLM Router & vLLM)"]
     end
 
     subgraph Workload_Cluster_2["Workload GPU Cluster 2 (Speech Processing)"]
         Gateway_W2[K-Gateway]
-        Higgs["higgs-serving<br/>(Higgs-TTS-3-4B & ASR via SGLang-Omni GPU)"]
+        Higgs["higgs-serving<br/>(Higgs-TTS-3-4b via SGLang-Omni)"]
+        Whisper["whisper-serving<br/>(Whisper ASR Speech-to-Text)"]
     end
 
     %% GitOps & User Roles
     Dev[Developer / Admin] -->|Push Manifests| Git[GitHub Repository]
     Dev -->|"HTTPS:443 (Mgmt Portals)"| Gateway_M
-    Client[Client / End-User] -->|"HTTPS / UDP:443 (App)"| Gateway_S
+    Client[Client / End-User] -->|"HTTPS:443 (App)"| Gateway_S
 
     %% GitOps Sync Flow
     Git -->|GitOps Sync| ArgoCD_M
 
     %% Control Path
-    ArgoCD_M -.->|kubeconfig: 6443| Workload_Cluster_1
-    ArgoCD_M -.->|kubeconfig: 6443| Workload_Cluster_2
+    Git -.->|kubeconfig: 6443| Workload_Cluster_1
+    Git -.->|kubeconfig: 6443| Workload_Cluster_2
 
     %% Management Ingress Flow (Istio)
     Gateway_M == "Reverse Proxy" ==> ArgoCD_M
@@ -46,23 +47,24 @@ graph TB
     Gateway_M == "Reverse Proxy" ==> VM_M
     Gateway_M == "OIDC Auth (platform realm: argocd/grafana clients)" ==> Keycloak_M
 
-    %% Service Ingress Flow (K-Gateway)
+    %% Service Ingress Flow (Istio)
     Gateway_S == "Reverse Proxy" ==> Backend
     Gateway_S == "OIDC Auth (platform realm: platform client)" ==> Keycloak_M
 
     %% Workload Traffic
-    Backend == "HTTP POST (SSE)" ==> Qwen
-    Backend == "HTTP/SSE Streaming (STT/TTS)" ==> Higgs
+    Backend == "HTTP POST (SSE)" ==> Gemma
+    Backend == "HTTP/SSE Streaming (TTS)" ==> Higgs
+    Backend == "HTTP REST (STT)" ==> Whisper
 ```
 
 ### 1.1 Cluster Roles and Autonomy
 * **Management Cluster (Control Plane)**: Hosts shared platform-level services such as GitOps orchestration (Argo CD), centralized monitoring/logging storage, identity provider (Keycloak), and model registry (MLflow).
-* **Workload GPU Clusters**: Act as worker clusters under the Management cluster orchestration. They run the GPU-accelerated application pods (`qwen-inference` and `higgs-serving`) and run identical local runtime controllers (`kgateway`, `gpu-operator`, etc.) to operate their workloads locally, excluding Argo CD.
+* **Workload GPU Clusters**: Act as worker clusters under the Management cluster orchestration. They run the GPU-accelerated application pods (`gemma-serving`, `higgs-serving`, and `whisper-serving`) and run identical local runtime controllers (`kgateway`, `gpu-operator`, etc.) to operate their workloads locally, excluding Argo CD.
 
 ### 1.2 Ingress Traffic and Streaming Routing
 * **Developer / Administrator Access (Istio Ingress)**: Administrators access the management plane portals (Argo CD, MLflow, Grafana dashboards, Keycloak Admin UI) through the **Istio Ingress Gateway** (`management-gateway` in the `istio-system` namespace), authenticated via Keycloak using dedicated clients (`argocd`, `grafana`, `argo-workflows`) in the unified `platform` realm.
-* **Client / End-User Access (K-Gateway Ingress)**: End-users access the `private-assistant` application through the **K-Gateway Ingress Gateway** (`service-gateway` in the `kgateway` namespace). Real-time client audio/voice streaming uses WebTransport/UDP protocols routed directly through K-Gateway to the application backend. User authentication is handled via Keycloak using the dedicated `platform` client in the same `platform` realm.
-* **Streaming Routing**: Real-time WebSocket streaming traffic is terminated at the Backend server, which acts as the orchestrator. Backend interacts with Higgs (STT/TTS) and Qwen (LLM) via cluster-internal private routing. External clients never connect directly to workload GPU pods, maintaining container isolation.
+* **Client / End-User Access (Istio Ingress)**: End-users access the `private-assistant` application through the **Istio Service Ingress Gateway** (`service-gateway` in the `istio-system` namespace). User authentication is handled via Keycloak using the dedicated `platform` client in the same `platform` realm.
+* **Streaming Routing**: Real-time WebSocket streaming traffic is terminated at the Backend server, which acts as the orchestrator. Backend interacts with Higgs (TTS), Whisper (STT), and Gemma (LLM) via cluster-internal private routing. External clients never connect directly to workload GPU pods, maintaining container isolation.
 * **Virtualization Integrity**: All routing is managed through the Gateway API. Workload pods do not use `hostNetwork` or `hostPort`, preserving container virtualization boundaries.
 
 ---
@@ -91,7 +93,8 @@ To prevent bootstrapping race conditions (circular dependencies) and ensure resi
 * Eliminates the need for static Nvidia Device Plugin mappings, instead binding GPU hardware dynamically via `ResourceClaimTemplates` when pods scale, ensuring container virtualization integrity.
 
 ### 2.4 Defense-in-Depth Ingress Authentication
-* **Gateway-level External Authentication (`oauth2-proxy`)**: Applied to all non-OIDC applications (e.g. MLflow on the management plane, and `private-assistant` on the service plane). For these apps, the ingress gate intercepts traffic and prompts login. Upon verification, the gateway injects an `Authorization: Bearer <JWT>` header downstream, which the pod-level Envoy sidecar validates using `RequestAuthentication` and `AuthorizationPolicy` resources to prevent gateway-bypass spoofing.
+* **Gateway-level External Authentication (`oauth2-proxy`)**: Applied to all non-OIDC applications (e.g. MLflow on the management plane, and `private-assistant` on the service plane). For these apps, the ingress gate intercepts traffic and prompts login. Upon verification, the gateway injects an `Authorization: Bearer <JWT>` header to the upstream connection.
+* **Waypoint Security**: Pod-level strict JWT validation has been decoupled and removed from the workload to prevent latency and routing overhead. Secure mTLS and L4 authorization policies on the waypoint gateway ensure that the backend workload is isolated and only accepts requests routed via the authenticated Ingress Gateway path.
 * **Native OIDC Integration**: Applications featuring native OIDC capabilities (Argo CD, Grafana, Argo Workflows, HashiCorp Vault) bypass the gateway-level proxy and authenticate users directly. This prevents double-login loops and guarantees session isolation (avoiding administrative session leakage from standard users).
 
 ---
@@ -111,20 +114,21 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 | **GitOps System**| Keycloak IDP | `26.5.4` | `3.0.6` | OIDC Identity Provider (Image tag overridden in manifest) |
 | **GitOps System**| PostgreSQL | `18-alpine` | - | Shared DB for Keycloak, MLflow, and Argo |
 | **GitOps System**| Valkey | `9.1.0-alpine` | - | Redis successor for caching |
-| **GitOps System**| OpenTelemetry Collector | `0.154.0` | `0.159.2` | Unified metrics & logs collector |
+| **GitOps System**| OpenTelemetry Collector | `0.154.0` | `0.162.0` | Unified metrics & logs collector |
 | **GitOps System**| Istio (Ambient) | `1.30.2` | `1.30.2` | L4/L7 sidecarless service mesh |
-| **GitOps System**| K-Gateway | `v2.3.5` | `v2.3.5` | Envoy-based user ingress gateway |
+| **GitOps System**| K-Gateway | `v2.3.5` | `v2.3.5` | Envoy-based user ingress gateway (Deprecated in favor of Istio Service Gateway) |
 | **GitOps System**| oauth2-proxy | `7.15.3` | `10.7.0` | Ingress authentication proxy handler |
-| **GitOps System**| VictoriaMetrics | `v1.146.0` | `0.85.9` | Grafana (`13.0.*`) and monitoring |
-| **GitOps System**| VictoriaLogs | `v1.51.0` | `0.11.5` | VictoriaMetrics logging subsystem |
+| **GitOps System**| VictoriaMetrics | `v1.146.0` | `0.85.10` | Grafana (`13.0.*`) and monitoring |
+| **GitOps System**| VictoriaLogs | `v1.51.0` | `0.2.7` | VictoriaMetrics logging subsystem |
 | **GitOps System**| GPU Operator | `v26.3.3` | `v26.3.3` | NVIDIA GPU driver & runtime provisioning |
 | **GitOps System**| NVIDIA DRA Driver | `0.4.1` | `0.4.1` | DRA-based dynamic GPU mapping |
 | **GitOps System**| kube-state-metrics | `2.19.1` | `7.5.1` | Kubernetes resource metrics exporter |
 | **GitOps System**| Kyverno | `v1.18.1` | `3.8.1` | Kubernetes policy engine |
 | **GitOps System**| Argo Workflows | `v4.0.6` | `1.0.18` | Batch workflow engine |
 | **GitOps System**| MLflow | `3.13.0` | `1.11.2` | ML model registry (Image tag overridden in manifest) |
-| **Inference App** | Qwen Inference | `Qwen/Qwen3-14B-AWQ`| - | Running via SGLang (`v0.5.14`) |
-| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | Unified STT/TTS via SGLang-Omni (`dev`) |
+| **Inference App** | Gemma Serving   | `google/gemma-4-e4b-it`| - | Running via vLLM Router & vLLM |
+| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | TTS via SGLang-Omni (`dev`) |
+| **Inference App** | Whisper Serving | `fedirz/faster-whisper-server:latest-cpu` | - | STT via faster-whisper-server |
 
 ---
 
@@ -174,7 +178,7 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 │   │       ├── postgres/, valkey/, victoria-metrics/, istio/, kgateway/, etc. (No Keycloak/MLflow/GPUs)
 │   ├── 02-apps/                        # Real-Time AI Agent applications
 │   │   ├── main/                       # Application runtimes on Main Cluster
-│   │   │   └── private-assistant/, qwen-inference/, higgs-serving/
+│   │   │   └── private-assistant/, gemma-serving/, higgs-serving/, whisper-serving/
 │   │   └── sub/                        # Mac Kind local bridging and tunnels
 │   │       └── cloudflared-tunnel/, gguf-routing/
 │   └── shared-charts/                  # Shared base Helm charts & update manager
@@ -194,10 +198,9 @@ The platform establishes an ingress-to-pod authentication contract, ensuring sec
 sequenceDiagram
     autonumber
     actor User as User Browser
-    participant GW as K-Gateway Ingress
+    participant GW as Istio Ingress Gateway
     participant Proxy as oauth2-proxy
     participant KC as Keycloak (IDP)
-    participant Sidecar as Envoy Sidecar
     participant Pod as Workload Container
 
     User->>GW: Request Resource (/)
@@ -214,20 +217,13 @@ sequenceDiagram
     
     Proxy->>Proxy: Verify OIDC session claims
     Proxy-->>GW: Return 200 OK & Inject Header (Authorization: Bearer <JWT>)
-    GW->>Sidecar: Forward Request with Bearer JWT
-    Sidecar->>Sidecar: Validate signature against Keycloak JWKS endpoint
-    
-    alt Token Invalid / Forged
-        Sidecar-->>User: Return 401/403 Access Denied
-    else Token Verified
-        Sidecar->>Pod: Forward request to application port
-        Pod-->>User: Return payload (200 OK)
-    end
+    GW->>Pod: Forward Request to application port (mTLS/HBONE via Waypoint)
+    Pod-->>User: Return payload (200 OK)
 ```
 
-### 5.2 Downstream JWT Sidecar Verification Details
-* **`RequestAuthentication`**: In namespaces secured via gateway-level proxy (such as `private-assistant` for the service plane), this scans requests for a Bearer JWT, identifying the issuer as `http://keycloak.keycloak.svc:8080/realms/platform` and verifying the cryptographic signature using keys fetched dynamically from the `jwksUri` (`/certs` endpoint).
-* **`AuthorizationPolicy`**: Restricts incoming traffic, setting `action: ALLOW` only for authenticated user sessions (`requestPrincipals: ["*"]`) or local endpoint telemetry probes (`/healthz`, `/metrics`, `/socket.io/*`, `/webtransport`). For native OIDC applications (e.g. Argo CD, Grafana), these sidecar-level checks are removed to allow native OIDC session cookies to pass through without blocking.
+### 5.2 Ingress and Downstream Security Details
+* **Gateway-level External Authentication**: Gateway-level OIDC proxy authentication (`service-gateway-auth` CUSTOM policy) intercepts all user requests and delegates verification to `oauth2-proxy`. If validation succeeds, it injects an `Authorization: Bearer <JWT>` header to the upstream connection.
+* **Waypoint Security**: Pod-level strict JWT validation has been decoupled and removed from the workload to prevent latency and routing overhead. Secure mTLS and L4 authorization policies on the waypoint gateway ensure that the backend workload is isolated and only accepts requests routed via the authenticated Ingress Gateway path.
 
 ---
 

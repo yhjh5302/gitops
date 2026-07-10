@@ -57,38 +57,38 @@ spec:
                 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
               fi
               hf download bosonai/higgs-tts-3-4b
-              sgl-omni serve --model-path bosonai/higgs-tts-3-4b --host 0.0.0.0 --port 8000
+              sgl-omni serve --model-path bosonai/higgs-tts-3-4b --host 0.0.0.0 --port 8080
           ports:
-            - containerPort: 8000
+            - containerPort: 8080
               name: http
           startupProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 8080
             failureThreshold: 360
             periodSeconds: 10
             timeoutSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 8080
             periodSeconds: 15
             timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 8080
             periodSeconds: 10
             timeoutSeconds: 15
           resources:
             limits:
-              nvidia.com/gpu: 1
-              memory: "32Gi"
-              cpu: "16"
-            requests:
-              nvidia.com/gpu: 1
-              memory: "16Gi"
               cpu: "8"
+              memory: "32Gi"
+              nvidia.com/gpu: 1
+            requests:
+              cpu: "4"
+              memory: "16Gi"
+              nvidia.com/gpu: 1
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm

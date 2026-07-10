@@ -19,9 +19,13 @@ spec:
         image: harbor.jin-server.com/docker.io/private-assistant:v1.0.0
         env:
         - name: QWEN_API_URL
-          value: "http://qwen-inference.private-assistant.svc:8000/v1"
+          value: "http://qwen-serving.private-assistant.svc:4000/v1"
+        - name: GEMMA_API_URL
+          value: "http://gemma-serving.private-assistant.svc:11434/v1"
         - name: HIGGS_API_URL
-          value: "http://higgs-serving.private-assistant.svc:8000"  # Unified Higgs ASR/TTS API URL
+          value: "http://higgs-serving.private-assistant.svc:8000/v1/audio/speech"
+        - name: WHISPER_API_URL
+          value: "http://whisper-serving.private-assistant.svc:8000/v1/audio/transcriptions"
         - name: DB_HOST
           value: "postgres.postgres.svc"
         - name: DB_PORT

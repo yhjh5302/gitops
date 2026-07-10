@@ -21,3 +21,21 @@ spec:
         - vault.jin-server.com
         notPaths:
         - /oauth2/*
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: service-gateway-auth
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: service-gateway
+  action: CUSTOM
+  provider:
+    name: oauth2-proxy
+  rules:
+  - to:
+    - operation:
+        notPaths:
+        - /oauth2/*

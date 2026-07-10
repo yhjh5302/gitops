@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whisper-serving
+  namespace: private-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: whisper-serving
+  template:
+    metadata:
+      labels:
+        app: whisper-serving
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "jin-vm"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: whisper-server
+          image: fedirz/faster-whisper-server:latest-cuda
+          env:
+            - name: WHISPER_MODEL
+              value: "large-v3"
+            - name: WHISPER_DEVICE
+              value: "cuda"
+            - name: WHISPER_COMPUTE_TYPE
+              value: "float16"
+          ports:
+            - containerPort: 8000
+              name: http
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            failureThreshold: 360
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 15
+          resources:
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+              nvidia.com/gpu: 1
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: model-cache
+              mountPath: /root/.cache/huggingface
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: whisper-model-cache-pvc

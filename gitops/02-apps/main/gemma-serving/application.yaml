@@ -1,22 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: main-qwen-inference
+  name: main-gemma-serving
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
   finalizers:
-  - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    # GitOps repository URL
     repoURL: 'https://github.com/yhjh5302/gitops.git'
     targetRevision: HEAD
-    path: gitops/02-apps/main/qwen-inference/manifests
+    path: gitops/02-apps/main/gemma-serving/manifests
   destination:
-    # Target workload cluster API server URL
-    # e.g., 'https://<api-server-ip>:6443'
     server: 'https://kubernetes.default.svc'
     namespace: private-assistant
   syncPolicy:
@@ -24,8 +21,9 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - CreateNamespace=true
-    - SkipDryRunOnMissingResource=true
+      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         istio.io/dataplane-mode: ambient
+        istio.io/use-waypoint: waypoint

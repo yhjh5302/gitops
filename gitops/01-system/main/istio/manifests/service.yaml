@@ -12,7 +12,7 @@ spec:
     port: 15021
     protocol: TCP
     targetPort: 15021
-    nodePort: 31521
+    nodePort: 30521
   - name: http
     port: 80
     protocol: TCP
@@ -25,3 +25,31 @@ spec:
     nodePort: 30443
   selector:
     gateway.networking.k8s.io/gateway-name: management-gateway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-gateway-istio
+  namespace: istio-system
+  labels:
+    gateway.networking.k8s.io/gateway-name: service-gateway
+spec:
+  type: NodePort
+  ports:
+  - name: status
+    port: 15021
+    protocol: TCP
+    targetPort: 15021
+    nodePort: 31521
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 31080
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 443
+    nodePort: 31443
+  selector:
+    gateway.networking.k8s.io/gateway-name: service-gateway

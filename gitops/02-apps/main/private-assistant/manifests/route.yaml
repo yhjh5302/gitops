@@ -6,7 +6,7 @@ metadata:
 spec:
   parentRefs:
     - name: service-gateway
-      namespace: kgateway
+      namespace: istio-system
   hostnames:
     - "private-assistant.jin-server.com"
   rules:
@@ -27,7 +27,7 @@ metadata:
 spec:
   parentRefs:
     - name: service-gateway
-      namespace: kgateway
+      namespace: istio-system
   hostnames:
     - "private-assistant.jin-server.com"
   rules:

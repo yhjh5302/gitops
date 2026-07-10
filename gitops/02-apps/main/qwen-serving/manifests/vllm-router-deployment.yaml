@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qwen-serving-router
+  namespace: private-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qwen-serving-router
+  template:
+    metadata:
+      labels:
+        app: qwen-serving-router
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "jin-vm"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: vllm-router
+          image: vllm/vllm-router:nightly
+          command: ["vllm-router"]
+          args:
+            - "--port"
+            - "4000"
+            - "--worker-urls"
+            - "http://qwen-serving-worker.private-assistant.svc:8000"
+            - "--policy"
+            - "consistent_hash"
+          ports:
+            - containerPort: 4000
+              name: http
+          resources:
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+            requests:
+              cpu: "1"
+              memory: "2Gi"

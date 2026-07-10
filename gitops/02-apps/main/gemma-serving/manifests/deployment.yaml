@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gemma-serving
+  namespace: private-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gemma-serving
+  template:
+    metadata:
+      labels:
+        app: gemma-serving
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "jin-vm"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              ollama serve &
+              until ollama list | grep -q "gemma4:12b"; do
+                echo "Model gemma4:12b not found, pulling..."
+                ollama pull gemma4:12b
+                sleep 5
+              done
+              echo "Model gemma4:12b is ready!"
+              wait
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0"
+            - name: OLLAMA_MODELS
+              value: "/root/.ollama/models"
+          ports:
+            - containerPort: 11434
+              name: http
+          startupProbe:
+            httpGet:
+              path: /
+              port: 11434
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 11434
+            periodSeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 11434
+            periodSeconds: 10
+            timeoutSeconds: 15
+          resources:
+            limits:
+              cpu: "8"
+              memory: "16Gi"
+              nvidia.com/gpu: 1
+            requests:
+              cpu: "4"
+              memory: "12Gi"
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: ollama-cache
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-cache
+          persistentVolumeClaim:
+            claimName: gemma-model-cache-pvc

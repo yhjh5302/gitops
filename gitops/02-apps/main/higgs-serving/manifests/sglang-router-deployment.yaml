@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: higgs-serving-router
+  namespace: private-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: higgs-serving-router
+  template:
+    metadata:
+      labels:
+        app: higgs-serving-router
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "jin-server"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: sglang-router
+          image: lmsysorg/sglang-omni:dev
+          command: ["python3", "-m", "sglang_router.launch_router"]
+          args:
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8000"
+            - "--worker-urls"
+            - "http://higgs-serving-worker.private-assistant.svc:8080"
+            - "--policy"
+            - "cache_aware"
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+            requests:
+              cpu: "1"
+              memory: "2Gi"

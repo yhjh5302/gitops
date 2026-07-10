@@ -21,6 +21,18 @@ spec:
           enabled: true
         devicePlugin:
           enabled: true
+          config:
+            create: true
+            name: device-plugin-config
+            default: time-slicing-config
+            data:
+              time-slicing-config: |-
+                version: v1
+                sharing:
+                  timeSlicing:
+                    resources:
+                    - name: nvidia.com/gpu
+                      replicas: 10
         dcgmExporter:
           enabled: true # Enable GPU metrics collection
   destination:

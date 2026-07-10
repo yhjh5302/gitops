@@ -8,8 +8,7 @@ spec:
     service:
       type: NodePort
       ports:
-      - port: 80
-        nodePort: 31080
-      - port: 443
-        nodePort: 31443
-
+        - port: 80
+          nodePort: 32080
+        - port: 443
+          nodePort: 32443
