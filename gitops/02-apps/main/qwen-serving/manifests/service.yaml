@@ -16,6 +16,8 @@ kind: Service
 metadata:
   name: qwen-serving-worker
   namespace: private-assistant
+  labels:
+    app: qwen-serving
 spec:
   ports:
     - port: 8000

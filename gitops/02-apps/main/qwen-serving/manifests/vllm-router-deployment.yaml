@@ -31,6 +31,8 @@ spec:
           image: vllm/vllm-router:nightly
           command: ["vllm-router"]
           args:
+            - "--host"
+            - "0.0.0.0"
             - "--port"
             - "4000"
             - "--worker-urls"

@@ -247,7 +247,7 @@ fi
 echo -e "\n${GREEN}9단계: ExternalSecret 즉시 동기화 트리거${NC}"
 echo " -> 네임스페이스 및 ExternalSecret이 등록될 때까지 15초 대기..."
 sleep 15
-NAMESPACES=("postgres" "keycloak" "mlflow" "argo-workflows" "redis" "oauth2-proxy" "private-assistant" "cozyvoice-serving" "whisper-serving" "qwen-inference")
+NAMESPACES=("postgres" "keycloak" "mlflow" "argo-workflows" "redis" "oauth2-proxy" "private-assistant" "cozyvoice-serving" "whisper-serving" "qwen-serving")
 for ns in "${NAMESPACES[@]}"; do
   kubectl annotate externalsecret -n "${ns}" --all force-sync=$(date +%s) --overwrite &>/dev/null || true
 done
