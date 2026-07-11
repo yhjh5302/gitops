@@ -38,44 +38,34 @@ spec:
       containers:
         - name: vllm-qwen
           image: vllm/vllm-openai:v0.24.0
-          # lifecycle:
-          #   postStart:
-          #     exec:
-          #       command:
-          #         - /bin/bash
-          #         - -c
-          #         - |
-          #           until curl -s http://127.0.0.1:8000/health > /dev/null; do sleep 2; done
-          #           curl -s -X POST http://127.0.0.1:8000/v1/chat/completions \
-          #             -H "Content-Type: application/json" \
-          #             -d '{"model": "qwen-3.5-9b", "messages": [{"role": "user", "content": "warmup"}], "max_tokens": 16}' > /dev/null
-          command: ["vllm", "serve"]
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              (
+                until curl -s http://127.0.0.1:8000/health > /dev/null; do
+                  sleep 2
+                done
+                curl -s -X POST http://127.0.0.1:8000/v1/chat/completions \
+                  -H "Content-Type: application/json" \
+                  -d '{"model": "qwen-3.5-9b", "messages": [{"role": "user", "content": "warmup"}], "max_tokens": 16}' > /dev/null
+              ) &
+              exec vllm serve "Qwen/Qwen3.5-9B" \
+                --host "0.0.0.0" \
+                --port "8000" \
+                --gpu-memory-utilization "0.92" \
+                --max-model-len "32768" \
+                --max-num-seqs "64" \
+                --quantization "fp8" \
+                --enforce-eager \
+                --enable-auto-tool-choice \
+                --tool-call-parser "qwen3_coder" \
+                --served-model-name "qwen-3.5-9b"
           env:
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: private-assistant-secrets
                   key: huggingface-token
-          args:
-            - "Qwen/Qwen3.5-9B"
-            - --host
-            - "0.0.0.0"
-            - --port
-            - "8000"
-            - --gpu-memory-utilization
-            - "0.92"
-            - --max-model-len
-            - "32768"
-            - --max-num-seqs
-            - "64"
-            - --quantization
-            - "fp8"
-            - --enforce-eager
-            - --enable-auto-tool-choice
-            - --tool-call-parser
-            - "qwen3_coder"
-            - --served-model-name
-            - "qwen-3.5-9b"
           ports:
             - containerPort: 8000
               name: http
