@@ -15,7 +15,7 @@ spec:
               protocol: TCP
             - port: "15021"
               protocol: TCP
-    # 2. Allow Postgres connections from keycloak, mlflow, and argo-workflows namespaces
+    # 2. Allow Postgres connections from keycloak, mlflow, argo-workflows, and private-assistant namespaces
     - fromEndpoints:
         - matchLabels:
             "k8s:io.kubernetes.pod.namespace": keycloak
@@ -23,6 +23,8 @@ spec:
             "k8s:io.kubernetes.pod.namespace": mlflow
         - matchLabels:
             "k8s:io.kubernetes.pod.namespace": argo-workflows
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": private-assistant
       toPorts:
         - ports:
             - port: "5432"
@@ -39,7 +41,7 @@ spec:
       app: postgres
   action: ALLOW
   rules:
-    # Rule A: Allow Postgres access from Keycloak, MLflow, and Argo Workflows pods
+    # Rule A: Allow Postgres access from Keycloak, MLflow, Argo Workflows, and Private Assistant pods
     - from:
       - source:
           principals:
@@ -47,6 +49,7 @@ spec:
             - "cluster.local/ns/mlflow/sa/mlflow"
             - "cluster.local/ns/argo-workflows/sa/argo-workflows-server"
             - "cluster.local/ns/argo-workflows/sa/argo-workflows-workflow-controller"
+            - "cluster.local/ns/private-assistant/sa/private-assistant"
       to:
       - operation:
           ports: ["5432"]
