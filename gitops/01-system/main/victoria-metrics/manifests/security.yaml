@@ -83,6 +83,14 @@ spec:
               protocol: TCP
             - port: "8401"
               protocol: TCP
+    # 4. Allow query traffic from private-assistant namespace
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": private-assistant
+      toPorts:
+        - ports:
+            - port: "8481"
+              protocol: TCP
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -138,10 +146,12 @@ spec:
     - to:
       - operation:
           ports: ["8480"]
-    # Rule B: Allow write traffic from vmagent
+    # Rule B: Allow write traffic from vmagent and OpenTelemetry collector
     - from:
       - source:
-          principals: ["cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"]
+          principals:
+            - "cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"
+            - "cluster.local/ns/victoria-metrics/sa/opentelemetry-collector"
       to:
       - operation:
           ports: ["8480"]
@@ -161,10 +171,12 @@ spec:
     - to:
       - operation:
           ports: ["8481"]
-    # Rule B: Allow query traffic from Grafana
+    # Rule B: Allow query traffic from Grafana and private-assistant
     - from:
       - source:
-          principals: ["cluster.local/ns/victoria-metrics/sa/victoria-metrics-grafana"]
+          principals:
+            - "cluster.local/ns/victoria-metrics/sa/victoria-metrics-grafana"
+            - "cluster.local/ns/private-assistant/sa/private-assistant"
       to:
       - operation:
           ports: ["8481"]
