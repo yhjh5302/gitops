@@ -41,6 +41,13 @@ spec:
             upstreams = [ "static://200" ]
             custom_templates_dir = "/etc/oauth2-proxy/templates"
             proxy_websockets = true
+        sessionStorage:
+          type: redis
+          redis:
+            existingSecret: oauth2-proxy-env-secrets
+            passwordKey: redis-password
+            standalone:
+              connectionUrl: "redis://valkey.valkey.svc.cluster.local:6379"
         extraVolumes:
         - name: templates
           configMap:
