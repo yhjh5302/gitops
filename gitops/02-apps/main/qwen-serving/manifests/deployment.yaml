@@ -38,17 +38,17 @@ spec:
       containers:
         - name: vllm-qwen
           image: vllm/vllm-openai:v0.24.0
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/bash
-                  - -c
-                  - |
-                    until curl -s http://127.0.0.1:8000/health > /dev/null; do sleep 2; done
-                    curl -s -X POST http://127.0.0.1:8000/v1/chat/completions \
-                      -H "Content-Type: application/json" \
-                      -d '{"model": "qwen-3.5-9b", "messages": [{"role": "user", "content": "warmup"}], "max_tokens": 16}' > /dev/null
+          # lifecycle:
+          #   postStart:
+          #     exec:
+          #       command:
+          #         - /bin/bash
+          #         - -c
+          #         - |
+          #           until curl -s http://127.0.0.1:8000/health > /dev/null; do sleep 2; done
+          #           curl -s -X POST http://127.0.0.1:8000/v1/chat/completions \
+          #             -H "Content-Type: application/json" \
+          #             -d '{"model": "qwen-3.5-9b", "messages": [{"role": "user", "content": "warmup"}], "max_tokens": 16}' > /dev/null
           command: ["vllm", "serve"]
           env:
             - name: HF_TOKEN
