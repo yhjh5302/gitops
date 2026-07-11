@@ -18,6 +18,8 @@ spec:
       releaseName: keycloak
       values: |
         fullnameOverride: "keycloak"
+        metrics:
+          enabled: true
         mode: production
         image:
           repository: quay.io/keycloak/keycloak

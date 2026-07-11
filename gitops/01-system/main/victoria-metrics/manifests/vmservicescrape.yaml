@@ -140,6 +140,9 @@ spec:
     - port: http
       path: /v1/sys/metrics
       interval: 5s
+      bearerTokenSecret:
+        name: victoria-metrics-vault-token
+        key: token
 ---
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMServiceScrape
