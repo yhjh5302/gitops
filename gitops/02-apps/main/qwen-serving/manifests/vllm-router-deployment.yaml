@@ -45,8 +45,6 @@ spec:
             - "64"
             - "--balance-rel-threshold"
             - "1.5"
-            - "--model-path"
-            - "Qwen/Qwen3.5-9B"
           ports:
             - containerPort: 4000
               name: http
