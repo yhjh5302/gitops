@@ -54,9 +54,7 @@ spec:
     # Rule A: Allow Kubelet health probes on port 4180
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["4180"]
-          paths: ["/ping", "/ready"]
     # Rule B: Allow access from Ingress Gateways to oauth2-proxy
     - from:
       - source:
@@ -66,13 +64,6 @@ spec:
       to:
       - operation:
           ports: ["4180"]
-          hosts:
-            - "oauth2-proxy.oauth2-proxy.svc.cluster.local"
-            - "private-assistant.jin-server.com"
-            - "argocd.jin-server.com"
-            - "grafana.jin-server.com"
-            - "workflows.jin-server.com"
-            - "code.jin-server.com"
     # Rule C: Allow VictoriaMetrics metrics scraping
     - from:
       - source:

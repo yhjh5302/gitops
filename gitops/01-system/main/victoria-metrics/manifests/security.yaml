@@ -98,9 +98,7 @@ spec:
     # Rule A: Allow Kubelet health probes
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["3000"]
-          paths: ["/api/health"]
     # Rule B: Allow access from Management Ingress Gateway to Grafana
     - from:
       - source:
@@ -108,7 +106,6 @@ spec:
       to:
       - operation:
           ports: ["3000"]
-          hosts: ["victoria-metrics-grafana.victoria-metrics.svc.cluster.local", "grafana.jin-server.com"]
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -124,9 +121,7 @@ spec:
     # Rule A: Allow Kubelet health probes
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8429"]
-          paths: ["/health"]
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -142,9 +137,7 @@ spec:
     # Rule A: Allow Kubelet health probes
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8480"]
-          paths: ["/health"]
     # Rule B: Allow write traffic from vmagent
     - from:
       - source:
@@ -167,9 +160,7 @@ spec:
     # Rule A: Allow Kubelet health probes
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8481"]
-          paths: ["/health"]
     # Rule B: Allow query traffic from Grafana
     - from:
       - source:
@@ -192,9 +183,7 @@ spec:
     # Rule A: Allow Kubelet health probes
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8482"]
-          paths: ["/health"]
     # Rule B: Allow data traffic from vminsert and vmselect
     - from:
       - source:

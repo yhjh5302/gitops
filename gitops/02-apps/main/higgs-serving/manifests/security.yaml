@@ -50,9 +50,7 @@ spec:
     # Rule A: Allow Kubelet health checks
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8080"]
-          paths: ["/health"]
     # Rule B: Allow SGLang API access from Router/UI
     - from:
       - source:

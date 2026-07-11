@@ -54,9 +54,7 @@ spec:
     # Rule A: Allow Kubelet health probes on management port
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["9000"]
-          paths: ["/health/live", "/health/ready", "/health/started"]
     # Rule B: Allow keycloak access from Management Ingress Gateway, OAuth2-Proxy, Web App, and Grafana
     - from:
       - source:
@@ -68,9 +66,6 @@ spec:
       to:
       - operation:
           ports: ["8080"]
-          hosts:
-            - "keycloak.keycloak.svc.cluster.local"
-            - "keycloak.jin-server.com"
     # Rule C: Allow VictoriaMetrics metrics scraping
     - from:
       - source:
@@ -78,4 +73,3 @@ spec:
       to:
       - operation:
           ports: ["9000"]
-          paths: ["/metrics"]

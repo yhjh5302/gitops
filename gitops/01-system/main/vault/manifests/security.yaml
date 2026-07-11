@@ -50,10 +50,6 @@ spec:
       to:
       - operation:
           ports: ["8200", "8201"]
-          hosts:
-            - "vault.vault.svc.cluster.local"
-            - "vault-active.vault.svc.cluster.local"
-            - "vault.jin-server.com"
     # Rule B: Allow VictoriaMetrics metrics scraping
     - from:
       - source:
@@ -61,4 +57,3 @@ spec:
       to:
       - operation:
           ports: ["8200"]
-          paths: ["/v1/sys/metrics"]

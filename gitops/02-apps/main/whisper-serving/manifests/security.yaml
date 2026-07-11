@@ -46,9 +46,7 @@ spec:
     # Rule A: Allow Kubelet health checks
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8000"]
-          paths: ["/health"]
     # Rule B: Allow Whisper API access from Web App
     - from:
       - source:

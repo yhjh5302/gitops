@@ -48,9 +48,7 @@ spec:
     # Rule A: Allow Kubelet health checks
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8000"]
-          paths: ["/healthz"]
     # Rule B: Allow access from Service Ingress Gateway and OAuth2-proxy
     - from:
       - source:
@@ -60,6 +58,3 @@ spec:
       to:
       - operation:
           ports: ["8000"]
-          hosts:
-            - "private-assistant.private-assistant.svc.cluster.local"
-            - "private-assistant.jin-server.com"

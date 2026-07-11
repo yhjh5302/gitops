@@ -79,9 +79,7 @@ spec:
     # Rule A: Allow Kubelet health checks on server and repo-server
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8080", "8084"]
-          paths: ["/healthz", "/healthz?full=true"]
     # Rule B: Allow access from Management Ingress Gateway to argocd-server
     - from:
       - source:
@@ -89,7 +87,6 @@ spec:
       to:
       - operation:
           ports: ["8080"]
-          hosts: ["argocd-server.argocd.svc.cluster.local", "argocd.jin-server.com"]
     # Rule C: Allow internal communication from argocd-server and controller to argocd-repo-server
     - from:
       - source:

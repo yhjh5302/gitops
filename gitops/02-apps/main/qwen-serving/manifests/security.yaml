@@ -52,9 +52,7 @@ spec:
     # Rule A: Allow Kubelet health checks
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["8000"]
-          paths: ["/health"]
     # Rule B: Allow Qwen API access from Router and VictoriaMetrics Scraper
     - from:
       - source:

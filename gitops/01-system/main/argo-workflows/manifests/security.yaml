@@ -72,9 +72,7 @@ spec:
     # Rule A: Allow Kubelet health probes on server (2746)
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["2746"]
-          paths: ["/"]
     # Rule B: Allow access from Management Ingress Gateway to argo-workflows-server
     - from:
       - source:
@@ -82,7 +80,6 @@ spec:
       to:
       - operation:
           ports: ["2746"]
-          hosts: ["argo-workflows-server.argo-workflows.svc.cluster.local", "workflows.jin-server.com"]
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -98,6 +95,4 @@ spec:
     # Rule A: Allow Kubelet health probes on controller (6060)
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["6060"]
-          paths: ["/healthz"]
