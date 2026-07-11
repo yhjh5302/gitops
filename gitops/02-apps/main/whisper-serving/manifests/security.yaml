@@ -1,0 +1,58 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: whisper-serving-security
+  namespace: private-assistant
+spec:
+  endpointSelector:
+    matchLabels:
+      app: whisper-serving
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 8000
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 3. Allow internal traffic within private-assistant namespace
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": private-assistant
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: whisper-serving-security-policy
+  namespace: private-assistant
+spec:
+  selector:
+    matchLabels:
+      app: whisper-serving
+  action: ALLOW
+  rules:
+    # Rule A: Allow Kubelet health checks
+    - to:
+      - operation:
+          methods: ["GET"]
+          ports: ["8000"]
+          paths: ["/health"]
+    # Rule B: Allow Whisper API access from Web App
+    - from:
+      - source:
+          principals: ["cluster.local/ns/private-assistant/sa/default"]
+      to:
+      - operation:
+          ports: ["8000"]

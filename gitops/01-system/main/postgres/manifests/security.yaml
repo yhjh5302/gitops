@@ -1,0 +1,53 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: postgres-security
+  namespace: postgres
+spec:
+  endpointSelector:
+    matchLabels:
+      app: postgres
+  ingress:
+    # 1. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 2. Allow Postgres connections from keycloak, mlflow, and argo-workflows namespaces
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": keycloak
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": mlflow
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": argo-workflows
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: postgres-security-policy
+  namespace: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  action: ALLOW
+  rules:
+    # Rule A: Allow Postgres access from Keycloak, MLflow, and Argo Workflows pods
+    - from:
+      - source:
+          principals:
+            - "cluster.local/ns/keycloak/sa/default"
+            - "cluster.local/ns/mlflow/sa/mlflow"
+            - "cluster.local/ns/argo-workflows/sa/argo-workflows-server"
+            - "cluster.local/ns/argo-workflows/sa/argo-workflows-workflow-controller"
+      to:
+      - operation:
+          ports: ["5432"]
+          hosts: ["postgres.postgres.svc.cluster.local"]

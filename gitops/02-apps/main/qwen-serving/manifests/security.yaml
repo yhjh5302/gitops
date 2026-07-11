@@ -1,0 +1,85 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: qwen-serving-security
+  namespace: private-assistant
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: ["qwen-serving", "qwen-serving-router"]
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 8000 (for qwen-serving worker)
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 3. Allow internal traffic within private-assistant namespace and victoria-metrics scraping
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": private-assistant
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": victoria-metrics
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+            - port: "4000"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: qwen-serving-worker-policy
+  namespace: private-assistant
+spec:
+  selector:
+    matchLabels:
+      app: qwen-serving
+  action: ALLOW
+  rules:
+    # Rule A: Allow Kubelet health checks
+    - to:
+      - operation:
+          methods: ["GET"]
+          ports: ["8000"]
+          paths: ["/health"]
+    # Rule B: Allow Qwen API access from Router and VictoriaMetrics Scraper
+    - from:
+      - source:
+          principals:
+            - "cluster.local/ns/private-assistant/sa/default"
+            - "cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"
+      to:
+      - operation:
+          ports: ["8000"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: qwen-serving-router-policy
+  namespace: private-assistant
+spec:
+  selector:
+    matchLabels:
+      app: qwen-serving-router
+  action: ALLOW
+  rules:
+    # Rule A: Allow Qwen router API access from private-assistant UI
+    - from:
+      - source:
+          principals: ["cluster.local/ns/private-assistant/sa/default"]
+      to:
+      - operation:
+          ports: ["4000"]

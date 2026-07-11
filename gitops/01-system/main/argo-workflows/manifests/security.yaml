@@ -1,0 +1,103 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: argo-workflows-server-security
+  namespace: argo-workflows
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: argo-workflows-server
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 2746
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "2746"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 3. Allow L7 HTTP traffic from Ingress Gateway
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": istio-system
+      toPorts:
+        - ports:
+            - port: "2746"
+              protocol: TCP
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: argo-workflows-controller-security
+  namespace: argo-workflows
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: argo-workflows-workflow-controller
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 6060
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "6060"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: argo-workflows-server-policy
+  namespace: argo-workflows
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argo-workflows-server
+  action: ALLOW
+  rules:
+    # Rule A: Allow Kubelet health probes on server (2746)
+    - to:
+      - operation:
+          methods: ["GET"]
+          ports: ["2746"]
+          paths: ["/"]
+    # Rule B: Allow access from Management Ingress Gateway to argo-workflows-server
+    - from:
+      - source:
+          principals: ["cluster.local/ns/istio-system/sa/management-gateway-istio"]
+      to:
+      - operation:
+          ports: ["2746"]
+          hosts: ["argo-workflows-server.argo-workflows.svc.cluster.local", "workflows.jin-server.com"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: argo-workflows-controller-policy
+  namespace: argo-workflows
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argo-workflows-workflow-controller
+  action: ALLOW
+  rules:
+    # Rule A: Allow Kubelet health probes on controller (6060)
+    - to:
+      - operation:
+          methods: ["GET"]
+          ports: ["6060"]
+          paths: ["/healthz"]

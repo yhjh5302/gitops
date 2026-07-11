@@ -1,0 +1,64 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: vault-security
+  namespace: vault
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+  ingress:
+    # 1. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 2. Allow API traffic from Ingress Gateway, External Secrets Operator (ESO), and VictoriaMetrics
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": istio-system
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": external-secrets
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": victoria-metrics
+      toPorts:
+        - ports:
+            - port: "8200"
+              protocol: TCP
+            - port: "8201"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: vault-security-policy
+  namespace: vault
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+  action: ALLOW
+  rules:
+    # Rule A: Allow API access from Management Ingress Gateway and External Secrets Operator
+    - from:
+      - source:
+          principals:
+            - "cluster.local/ns/istio-system/sa/management-gateway-istio"
+            - "cluster.local/ns/external-secrets/sa/external-secrets-operator"
+      to:
+      - operation:
+          ports: ["8200", "8201"]
+          hosts:
+            - "vault.vault.svc.cluster.local"
+            - "vault-active.vault.svc.cluster.local"
+            - "vault.jin-server.com"
+    # Rule B: Allow VictoriaMetrics metrics scraping
+    - from:
+      - source:
+          principals: ["cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"]
+      to:
+      - operation:
+          ports: ["8200"]
+          paths: ["/v1/sys/metrics"]

@@ -1,0 +1,65 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: private-assistant-security
+  namespace: private-assistant
+spec:
+  endpointSelector:
+    matchLabels:
+      app: private-assistant
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 8000
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 3. Allow HTTP traffic from Ingress Gateway and OAuth2 proxy
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": istio-system
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": oauth2-proxy
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: private-assistant-security-policy
+  namespace: private-assistant
+spec:
+  selector:
+    matchLabels:
+      app: private-assistant
+  action: ALLOW
+  rules:
+    # Rule A: Allow Kubelet health checks
+    - to:
+      - operation:
+          methods: ["GET"]
+          ports: ["8000"]
+          paths: ["/healthz"]
+    # Rule B: Allow access from Service Ingress Gateway and OAuth2-proxy
+    - from:
+      - source:
+          principals:
+            - "cluster.local/ns/istio-system/sa/service-gateway-istio"
+            - "cluster.local/ns/oauth2-proxy/sa/oauth2-proxy"
+      to:
+      - operation:
+          ports: ["8000"]
+          hosts:
+            - "private-assistant.private-assistant.svc.cluster.local"
+            - "private-assistant.jin-server.com"

@@ -1,0 +1,81 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: higgs-serving-security
+  namespace: private-assistant
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: ["higgs-serving", "higgs-serving-router"]
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 8080 (for higgs-serving worker)
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 3. Allow internal traffic within private-assistant namespace
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": private-assistant
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: higgs-serving-worker-policy
+  namespace: private-assistant
+spec:
+  selector:
+    matchLabels:
+      app: higgs-serving
+  action: ALLOW
+  rules:
+    # Rule A: Allow Kubelet health checks
+    - to:
+      - operation:
+          methods: ["GET"]
+          ports: ["8080"]
+          paths: ["/health"]
+    # Rule B: Allow SGLang API access from Router/UI
+    - from:
+      - source:
+          principals: ["cluster.local/ns/private-assistant/sa/default"]
+      to:
+      - operation:
+          ports: ["8080"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: higgs-serving-router-policy
+  namespace: private-assistant
+spec:
+  selector:
+    matchLabels:
+      app: higgs-serving-router
+  action: ALLOW
+  rules:
+    # Rule A: Allow Higgs router API access from private-assistant UI
+    - from:
+      - source:
+          principals: ["cluster.local/ns/private-assistant/sa/default"]
+      to:
+      - operation:
+          ports: ["8000"]

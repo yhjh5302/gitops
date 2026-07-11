@@ -1,0 +1,49 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: valkey-security
+  namespace: valkey
+spec:
+  endpointSelector:
+    matchLabels:
+      app: valkey
+  ingress:
+    # 1. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 2. Allow Valkey connections from private-assistant and oauth2-proxy namespaces
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": private-assistant
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": oauth2-proxy
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: valkey-security-policy
+  namespace: valkey
+spec:
+  selector:
+    matchLabels:
+      app: valkey
+  action: ALLOW
+  rules:
+    # Rule A: Allow Valkey access from private-assistant and oauth2-proxy pods
+    - from:
+      - source:
+          principals:
+            - "cluster.local/ns/private-assistant/sa/private-assistant"
+            - "cluster.local/ns/oauth2-proxy/sa/oauth2-proxy"
+      to:
+      - operation:
+          ports: ["6379"]
+          hosts: ["valkey.valkey.svc.cluster.local"]
