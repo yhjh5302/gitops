@@ -57,7 +57,7 @@ spec:
               if [ ! -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ]; then
                 uv venv -p 3.12
                 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
-                uv pip install -v -e .
+                uv pip install -v .
               else
                 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
               fi
