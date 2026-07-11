@@ -50,6 +50,8 @@ spec:
           spec:
             selectAllByDefault: true # Automatically collect from all ServiceMonitors
             scrapeInterval: "5s"
+            extraArgs:
+              maxLabelsPerTimeseries: "150"
         prometheus-node-exporter:
           hostRootFsMount:
             mountPropagation: HostToContainer
