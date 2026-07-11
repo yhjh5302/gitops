@@ -16,6 +16,12 @@ spec:
       skipCrds: true # CRDs pre-installed via bootstrap
       values: |
         fullnameOverride: "victoria-metrics"
+        kubeControllerManager:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeEtcd:
+          enabled: false
         syncJob:
           enabled: false
         vmsingle:
