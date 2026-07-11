@@ -129,7 +129,11 @@ spec:
     # Rule A: Allow Kubelet health probes
     - to:
       - operation:
-          ports: ["8429"]
+          ports: ["8429", "8435"]
+    # Rule B: Allow outbound scraping to secure control plane and other services
+    - to:
+      - operation:
+          ports: ["10257", "10259", "2379", "8200", "9000", "8080", "9100", "8480"]
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
