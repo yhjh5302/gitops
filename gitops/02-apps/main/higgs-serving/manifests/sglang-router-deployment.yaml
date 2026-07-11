@@ -29,24 +29,23 @@ spec:
       containers:
         - name: sglang-router
           image: lmsysorg/sglang-omni:dev
-          command: ["python3", "-m", "sglang_router.launch_router"]
+          command: ["/bin/zsh", "-c"]
           args:
-            - "--host"
-            - "0.0.0.0"
-            - "--port"
-            - "8000"
-            - "--worker-urls"
-            - "http://higgs-serving-worker.private-assistant.svc:8080"
-            - "--policy"
-            - "cache_aware"
-            - "--cache-threshold"
-            - "0.3"
-            - "--balance-abs-threshold"
-            - "64"
-            - "--balance-rel-threshold"
-            - "1.5"
-            - "--tokenizer-path"
-            - "bosonai/higgs-tts-3-4b"
+            - |
+              mkdir -p /workspace
+              if [ ! -d "/workspace/sglang-omni" ]; then
+                git clone https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
+              fi
+              PYTHONPATH=/workspace/sglang-omni python3 -m sglang_omni_router.serve \
+                --host 0.0.0.0 \
+                --port 8000 \
+                --worker-urls http://higgs-serving-worker.private-assistant.svc:8080 \
+                --policy least_request \
+                --model bosonai/higgs-tts-3-4b \
+                --health-failure-threshold 2 \
+                --health-success-threshold 1 \
+                --health-check-interval-secs 10 \
+                --max-payload-size 536870912
           ports:
             - containerPort: 8000
               name: http
