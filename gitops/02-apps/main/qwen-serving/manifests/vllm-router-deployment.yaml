@@ -13,6 +13,7 @@ spec:
       labels:
         app: qwen-serving-router
     spec:
+      serviceAccountName: qwen-serving
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

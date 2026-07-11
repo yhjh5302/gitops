@@ -1,3 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: whisper-serving
+  namespace: private-assistant
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +21,7 @@ spec:
       labels:
         app: whisper-serving
     spec:
+      serviceAccountName: whisper-serving
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

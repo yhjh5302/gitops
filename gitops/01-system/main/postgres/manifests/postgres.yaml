@@ -1,4 +1,10 @@
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres
+  namespace: postgres
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
@@ -28,6 +34,7 @@ spec:
       labels:
         app: postgres
     spec:
+      serviceAccountName: postgres
       containers:
       - name: postgres
         image: postgres:18-alpine

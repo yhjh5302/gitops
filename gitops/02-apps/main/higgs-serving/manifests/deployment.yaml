@@ -1,3 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: higgs-serving
+  namespace: private-assistant
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +21,7 @@ spec:
       labels:
         app: higgs-serving
     spec:
+      serviceAccountName: higgs-serving
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

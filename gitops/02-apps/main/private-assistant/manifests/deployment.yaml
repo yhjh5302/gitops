@@ -13,6 +13,7 @@ spec:
       labels:
         app: private-assistant
     spec:
+      serviceAccountName: private-assistant
       containers:
       - name: assistant
         # Client frontend interface and Go Backend unified container

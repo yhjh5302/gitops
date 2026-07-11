@@ -57,7 +57,7 @@ spec:
     - from:
       - source:
           principals:
-            - "cluster.local/ns/private-assistant/sa/default"
+            - "cluster.local/ns/private-assistant/sa/qwen-serving"
             - "cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"
       to:
       - operation:
@@ -77,7 +77,7 @@ spec:
     # Rule A: Allow Qwen router API access from private-assistant UI
     - from:
       - source:
-          principals: ["cluster.local/ns/private-assistant/sa/default"]
+          principals: ["cluster.local/ns/private-assistant/sa/private-assistant"]
       to:
       - operation:
           ports: ["4000"]

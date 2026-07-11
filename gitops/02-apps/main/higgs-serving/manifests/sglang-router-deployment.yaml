@@ -13,6 +13,7 @@ spec:
       labels:
         app: higgs-serving-router
     spec:
+      serviceAccountName: higgs-serving
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

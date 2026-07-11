@@ -1,4 +1,10 @@
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: valkey
+  namespace: valkey
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: valkey-pvc
@@ -27,6 +33,7 @@ spec:
       labels:
         app: valkey
     spec:
+      serviceAccountName: valkey
       containers:
       - name: valkey
         image: valkey/valkey:9.1.0-alpine

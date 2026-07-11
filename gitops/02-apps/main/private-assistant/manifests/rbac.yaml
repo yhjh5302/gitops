@@ -13,13 +13,19 @@ rules:
   resources: ["pods", "nodes"]
   verbs: ["get", "list"]
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: private-assistant
+  namespace: private-assistant
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: private-assistant-cluster-reader-binding
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: private-assistant
   namespace: private-assistant
 roleRef:
   kind: ClusterRole

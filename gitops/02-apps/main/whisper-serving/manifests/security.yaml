@@ -50,7 +50,7 @@ spec:
     # Rule B: Allow Whisper API access from Web App
     - from:
       - source:
-          principals: ["cluster.local/ns/private-assistant/sa/default"]
+          principals: ["cluster.local/ns/private-assistant/sa/private-assistant"]
       to:
       - operation:
           ports: ["8000"]

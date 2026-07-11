@@ -54,7 +54,7 @@ spec:
     # Rule B: Allow SGLang API access from Router/UI
     - from:
       - source:
-          principals: ["cluster.local/ns/private-assistant/sa/default"]
+          principals: ["cluster.local/ns/private-assistant/sa/higgs-serving"]
       to:
       - operation:
           ports: ["8080"]
@@ -73,7 +73,7 @@ spec:
     # Rule A: Allow Higgs router API access from private-assistant UI
     - from:
       - source:
-          principals: ["cluster.local/ns/private-assistant/sa/default"]
+          principals: ["cluster.local/ns/private-assistant/sa/private-assistant"]
       to:
       - operation:
           ports: ["8000"]
