@@ -115,7 +115,6 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-            sizeLimit: 32Gi
         - name: model-cache
           persistentVolumeClaim:
             claimName: higgs-model-cache-pvc
