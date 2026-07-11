@@ -38,7 +38,15 @@ spec:
             - "--worker-urls"
             - "http://qwen-serving-worker.private-assistant.svc:8000"
             - "--policy"
-            - "consistent_hash"
+            - "cache_aware"
+            - "--cache-threshold"
+            - "0.3"
+            - "--balance-abs-threshold"
+            - "64"
+            - "--balance-rel-threshold"
+            - "1.5"
+            - "--model-path"
+            - "Qwen/Qwen3.5-9B"
           ports:
             - containerPort: 4000
               name: http

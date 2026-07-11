@@ -30,6 +30,11 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: argocd
+      ignoreDifferences:
+      - group: ""
+        kind: PersistentVolumeClaim
+        jsonPointers:
+        - /spec/resources/requests/storage
       syncPolicy:
         automated:
           prune: true

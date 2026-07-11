@@ -23,7 +23,7 @@ spec:
         - name: GEMMA_API_URL
           value: "http://gemma-serving.private-assistant.svc:11434/v1"
         - name: HIGGS_API_URL
-          value: "http://higgs-serving-worker.private-assistant.svc:8080/v1/audio/speech"
+          value: "http://higgs-serving.private-assistant.svc:8000/v1/audio/speech"
         - name: WHISPER_API_URL
           value: "http://whisper-serving.private-assistant.svc:8000/v1/audio/transcriptions"
         - name: DB_HOST

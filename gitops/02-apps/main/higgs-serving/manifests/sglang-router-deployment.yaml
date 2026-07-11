@@ -39,6 +39,14 @@ spec:
             - "http://higgs-serving-worker.private-assistant.svc:8080"
             - "--policy"
             - "cache_aware"
+            - "--cache-threshold"
+            - "0.3"
+            - "--balance-abs-threshold"
+            - "64"
+            - "--balance-rel-threshold"
+            - "1.5"
+            - "--tokenizer-path"
+            - "bosonai/higgs-tts-3-4b"
           ports:
             - containerPort: 8000
               name: http
