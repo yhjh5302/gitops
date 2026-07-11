@@ -114,6 +114,13 @@ spec:
       to:
       - operation:
           ports: ["3000"]
+    # Rule C: Allow scraping from vmagent
+    - from:
+      - source:
+          principals: ["cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"]
+      to:
+      - operation:
+          ports: ["3000"]
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -171,12 +178,13 @@ spec:
     - to:
       - operation:
           ports: ["8481"]
-    # Rule B: Allow query traffic from Grafana and private-assistant
+    # Rule B: Allow query traffic from Grafana and private-assistant, and scraping from vmagent
     - from:
       - source:
           principals:
             - "cluster.local/ns/victoria-metrics/sa/victoria-metrics-grafana"
             - "cluster.local/ns/private-assistant/sa/private-assistant"
+            - "cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"
       to:
       - operation:
           ports: ["8481"]
@@ -203,3 +211,10 @@ spec:
       to:
       - operation:
           ports: ["8482", "8400", "8401"]
+    # Rule C: Allow scraping from vmagent
+    - from:
+      - source:
+          principals: ["cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"]
+      to:
+      - operation:
+          ports: ["8482"]
