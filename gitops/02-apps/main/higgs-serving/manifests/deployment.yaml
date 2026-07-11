@@ -38,6 +38,17 @@ spec:
       containers:
         - name: higgs
           image: lmsysorg/sglang-omni:dev
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/zsh
+                  - -c
+                  - |
+                    until curl -s http://127.0.0.1:8080/health > /dev/null; do sleep 2; done
+                    curl -s -X POST http://127.0.0.1:8080/v1/audio/speech \
+                      -H "Content-Type: application/json" \
+                      -d '{"model": "bosonai/higgs-tts-3-4b", "input": "warmup"}' > /dev/null
           env:
             - name: HF_TOKEN
               valueFrom:
