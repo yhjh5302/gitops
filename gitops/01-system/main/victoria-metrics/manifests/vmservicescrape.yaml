@@ -139,6 +139,8 @@ spec:
   endpoints:
     - port: http
       path: /v1/sys/metrics
+      params:
+        format: ["prometheus"]
       interval: 5s
       bearerTokenSecret:
         name: victoria-metrics-vault-token

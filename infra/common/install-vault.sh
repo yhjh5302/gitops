@@ -34,7 +34,35 @@ kubectl delete mutatingwebhookconfiguration vault-agent-injector-cfg --ignore-no
 
 # 단중화 최적화: 복제본(replicas)을 1개로 고정하여 단일 Pod로 구동합니다.
 echo " -> Vault 복제본(replicas)을 1개로 설정하여 단중화(Standalone)로 구성합니다."
-EXTRA_VAULT_ARGS=("--set" "server.ha.replicas=1")
+
+VAULT_RAFT_CONFIG=$(cat <<EOF
+ui = true
+
+listener "tcp" {
+  tls_disable = 1
+  address = "[::]:8200"
+  cluster_address = "[::]:8201"
+}
+
+storage "raft" {
+  path = "/vault/data"
+}
+
+service_registration "kubernetes" {}
+
+telemetry {
+  prometheus_retention_time = "15s"
+  disable_hostname = true
+}
+
+disable_mlock = true
+EOF
+)
+
+EXTRA_VAULT_ARGS=(
+  "--set" "server.ha.replicas=1"
+  "--set" "server.ha.raft.config=${VAULT_RAFT_CONFIG}"
+)
 
 # 운영 환경 모드 설정:
 # server.dev.enabled=false (개발 모드 비활성화)
@@ -70,7 +98,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KEY_FILE="${SCRIPT_DIR}/vault-keys.json"
 
 # 초기화 상태 체크
-VAULT_STATUS=$(kubectl exec -n vault vault-0 -- vault status -format=json 2>/dev/null || echo "{}")
+VAULT_STATUS=$(kubectl exec -n vault vault-0 -- vault status -format=json 2>/dev/null || true)
 INIT_STATUS=$(echo "${VAULT_STATUS}" | jq -r '.initialized' 2>/dev/null || echo "false")
 
 if [ "${INIT_STATUS}" != "True" ] && [ "${INIT_STATUS}" != "true" ]; then
