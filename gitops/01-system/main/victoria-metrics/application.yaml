@@ -42,6 +42,8 @@ spec:
                         storage: 100Gi
             vminsert:
               replicaCount: 1
+              extraArgs:
+                maxLabelsPerTimeseries: "150"
             vmselect:
               replicaCount: 1
         # Enable Prometheus-compatible agent
@@ -50,8 +52,6 @@ spec:
           spec:
             selectAllByDefault: true # Automatically collect from all ServiceMonitors
             scrapeInterval: "5s"
-            extraArgs:
-              maxLabelsPerTimeseries: "150"
         prometheus-node-exporter:
           hostRootFsMount:
             mountPropagation: HostToContainer
