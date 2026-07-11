@@ -45,9 +45,9 @@ spec:
                   name: private-assistant-secrets
                   key: huggingface-token
             - name: UV_CACHE_DIR
-              value: "/root/.cache/uv/cache"
+              value: "/root/.cache/uv"
             - name: UV_PROJECT_ENVIRONMENT
-              value: "/root/.cache/uv/venv"
+              value: "/root/.cache/venv"
           command: ["/bin/zsh", "-c"]
           args:
             - |
@@ -99,16 +99,24 @@ spec:
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
-            - name: huggingface-cache
+            - name: model-cache
               mountPath: /root/.cache/huggingface
+              subPath: huggingface
+            - name: model-cache
+              mountPath: /root/.triton/cache
+              subPath: triton
             - name: venv-cache
               mountPath: /root/.cache/uv
+              subPath: uv
+            - name: venv-cache
+              mountPath: /root/.cache/venv
+              subPath: venv
       volumes:
         - name: dshm
           emptyDir:
             medium: Memory
             sizeLimit: 32Gi
-        - name: huggingface-cache
+        - name: model-cache
           persistentVolumeClaim:
             claimName: higgs-model-cache-pvc
         - name: venv-cache

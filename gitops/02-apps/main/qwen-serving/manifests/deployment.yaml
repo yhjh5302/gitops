@@ -99,13 +99,17 @@ spec:
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
-            - name: huggingface-cache
+            - name: model-cache
               mountPath: /root/.cache/huggingface
+              subPath: huggingface
+            - name: model-cache
+              mountPath: /root/.triton/cache
+              subPath: triton
       volumes:
         - name: dshm
           emptyDir:
             medium: Memory
             sizeLimit: 32Gi
-        - name: huggingface-cache
+        - name: model-cache
           persistentVolumeClaim:
             claimName: qwen-model-cache-pvc
