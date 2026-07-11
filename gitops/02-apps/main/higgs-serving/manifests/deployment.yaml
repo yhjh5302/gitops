@@ -57,7 +57,7 @@ spec:
               fi
               cd /workspace/sglang-omni
               if [ ! -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ]; then
-                uv venv "$UV_PROJECT_ENVIRONMENT" -p 3.12
+                uv venv -p 3.12
                 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
                 uv pip install -v -e .
               else
