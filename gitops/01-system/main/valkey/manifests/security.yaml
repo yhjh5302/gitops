@@ -46,4 +46,3 @@ spec:
       to:
       - operation:
           ports: ["6379"]
-          hosts: ["valkey.valkey.svc.cluster.local"]

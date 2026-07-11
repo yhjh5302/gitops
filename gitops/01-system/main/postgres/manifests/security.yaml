@@ -50,4 +50,3 @@ spec:
       to:
       - operation:
           ports: ["5432"]
-          hosts: ["postgres.postgres.svc.cluster.local"]

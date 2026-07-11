@@ -46,9 +46,7 @@ spec:
     # Rule A: Allow Kubelet health probe
     - to:
       - operation:
-          methods: ["GET"]
           ports: ["5000"]
-          paths: ["/health"]
     # Rule B: Allow access from Management Ingress Gateway
     - from:
       - source:
@@ -56,4 +54,3 @@ spec:
       to:
       - operation:
           ports: ["5000"]
-          hosts: ["mlflow.mlflow.svc.cluster.local", "mlflow.jin-server.com"]
