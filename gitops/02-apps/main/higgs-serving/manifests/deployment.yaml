@@ -72,13 +72,11 @@ spec:
                 git clone https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
               fi
               cd /workspace/sglang-omni
-              if [ ! -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ]; then
-                uv venv -p 3.12
-                source "$UV_PROJECT_ENVIRONMENT/bin/activate"
-                uv pip install -v .
-              else
-                source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+              if [ ! -d "$UV_PROJECT_ENVIRONMENT" ]; then
+                uv venv "$UV_PROJECT_ENVIRONMENT" -p 3.12
               fi
+              source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+              uv pip install -v .
               exec sgl-omni serve --model-path bosonai/higgs-tts-3-4b --host 0.0.0.0 --port 8000
           env:
             - name: HF_TOKEN
