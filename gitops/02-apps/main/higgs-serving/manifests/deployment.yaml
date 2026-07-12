@@ -72,7 +72,7 @@ spec:
                 git clone https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
               fi
               cd /workspace/sglang-omni
-              if [ ! -d "$UV_PROJECT_ENVIRONMENT" ]; then
+              if [ ! -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ]; then
                 uv venv "$UV_PROJECT_ENVIRONMENT" -p 3.12
               fi
               source "$UV_PROJECT_ENVIRONMENT/bin/activate"
