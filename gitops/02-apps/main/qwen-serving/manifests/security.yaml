@@ -80,4 +80,4 @@ spec:
           principals: ["cluster.local/ns/private-assistant/sa/private-assistant"]
       to:
       - operation:
-          ports: ["4000"]
+          ports: ["8000"]

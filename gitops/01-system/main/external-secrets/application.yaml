@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: main-vault-config
+  name: main-external-secrets-config
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -10,10 +10,10 @@ spec:
   source:
     repoURL: 'https://github.com/yhjh5302/gitops.git'
     targetRevision: HEAD
-    path: gitops/01-system/main/vault/manifests
+    path: gitops/01-system/main/external-secrets/manifests
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: vault
+    namespace: external-secrets
   syncPolicy:
     automated:
       prune: true

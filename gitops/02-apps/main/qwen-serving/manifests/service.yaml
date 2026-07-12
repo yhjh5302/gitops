@@ -5,8 +5,8 @@ metadata:
   namespace: private-assistant
 spec:
   ports:
-    - port: 4000
-      targetPort: 4000
+    - port: 8000
+      targetPort: 8000
       name: http
   selector:
     app: qwen-serving-router

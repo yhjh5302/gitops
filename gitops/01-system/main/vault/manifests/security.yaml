@@ -46,7 +46,7 @@ spec:
       - source:
           principals:
             - "cluster.local/ns/istio-system/sa/management-gateway-istio"
-            - "cluster.local/ns/external-secrets/sa/external-secrets-operator"
+            - "cluster.local/ns/external-secrets/sa/external-secrets"
       to:
       - operation:
           ports: ["8200", "8201"]

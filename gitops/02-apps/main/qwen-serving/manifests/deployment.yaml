@@ -35,6 +35,24 @@ spec:
         - key: "nvidia.com/gpu"
           operator: "Exists"
           effect: "NoSchedule"
+      initContainers:
+        - name: download-model
+          image: vllm/vllm-openai:v0.24.0
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              echo "Downloading Qwen model..."
+              hf download Qwen/Qwen3.5-9B
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: private-assistant-secrets
+                  key: huggingface-token
+          volumeMounts:
+            - name: model-cache
+              mountPath: /root/.cache/huggingface
+              subPath: huggingface
       containers:
         - name: vllm-qwen
           image: vllm/vllm-openai:v0.24.0
@@ -90,12 +108,12 @@ spec:
             timeoutSeconds: 15
           resources:
             limits:
-              cpu: "16"
-              memory: "32Gi"
+              cpu: "8"
+              memory: "16Gi"
               nvidia.com/gpu: 1
             requests:
               cpu: "4"
-              memory: "12Gi"
+              memory: "8Gi"
               nvidia.com/gpu: 1
           volumeMounts:
             - name: dshm

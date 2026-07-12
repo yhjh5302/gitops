@@ -35,7 +35,7 @@ spec:
             - "--host"
             - "0.0.0.0"
             - "--port"
-            - "4000"
+            - "8000"
             - "--worker-urls"
             - "http://qwen-serving-worker.private-assistant.svc:8000"
             - "--policy"
@@ -47,7 +47,7 @@ spec:
             - "--balance-rel-threshold"
             - "1.5"
           ports:
-            - containerPort: 4000
+            - containerPort: 8000
               name: http
           resources:
             limits:

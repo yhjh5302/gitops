@@ -20,9 +20,9 @@ spec:
         image: harbor.jin-server.com/docker.io/private-assistant:v1.0.0
         env:
         - name: LLM_API_URL
-          value: "http://qwen-serving.private-assistant.svc:4000/v1"
+          value: "http://qwen-serving.private-assistant.svc:8000/v1"
         - name: TTS_API_URL
-          value: "http://higgs-serving-worker.private-assistant.svc:8080/v1/audio/speech"
+          value: "http://higgs-serving.private-assistant.svc:8000/v1/audio/speech"
         - name: STT_API_URL
           value: "http://whisper-serving.private-assistant.svc:8000/v1/audio/transcriptions"
         - name: DB_HOST

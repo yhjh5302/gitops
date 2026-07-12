@@ -1,0 +1,126 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: external-secrets-core-security
+  namespace: external-secrets
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-secrets
+  ingress:
+    # 1. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 2. Allow metrics scraping on port 8080
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": victoria-metrics
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: external-secrets-cert-controller-security
+  namespace: external-secrets
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-secrets-cert-controller
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 8081
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8081"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 3. Allow metrics scraping on port 8080
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": victoria-metrics
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: external-secrets-webhook-security
+  namespace: external-secrets
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-secrets-webhook
+  ingress:
+    # 1. Allow Kubelet health check on HTTP port 8081
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8081"
+              protocol: TCP
+    # 2. Allow Istio ztunnel HBONE tunneling
+    - toPorts:
+        - ports:
+            - port: "15008"
+              protocol: TCP
+            - port: "15021"
+              protocol: TCP
+    # 3. Allow incoming Webhook traffic on port 10250 from Kube APIServer (host / remote-node / all endpoints)
+    - fromEntities:
+        - host
+        - remote-node
+        - cluster
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
+    # 4. Allow metrics scraping on port 8080
+    - fromEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": victoria-metrics
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: external-secrets-policy
+  namespace: external-secrets
+spec:
+  action: ALLOW
+  rules:
+    # Rule A: Allow Kubelet health checks on cert-controller and webhook
+    - to:
+      - operation:
+          ports: ["8081"]
+    # Rule B: Allow Webhook traffic (10250) from any source (since API Server is outside the mesh)
+    - to:
+      - operation:
+          ports: ["10250"]
+    # Rule C: Allow VictoriaMetrics metrics scraping
+    - from:
+      - source:
+          principals: ["cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"]
+      to:
+      - operation:
+          ports: ["8080"]

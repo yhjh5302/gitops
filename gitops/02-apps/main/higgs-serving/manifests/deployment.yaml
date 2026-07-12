@@ -35,6 +35,24 @@ spec:
         - key: "nvidia.com/gpu"
           operator: "Exists"
           effect: "NoSchedule"
+      initContainers:
+        - name: download-model
+          image: lmsysorg/sglang-omni:dev
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              echo "Downloading Higgs model..."
+              hf download bosonai/higgs-tts-3-4b
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: private-assistant-secrets
+                  key: huggingface-token
+          volumeMounts:
+            - name: model-cache
+              mountPath: /root/.cache/huggingface
+              subPath: huggingface
       containers:
         - name: higgs
           image: lmsysorg/sglang-omni:dev
@@ -42,10 +60,10 @@ spec:
           args:
             - |
               (
-                until curl -s http://127.0.0.1:8080/health > /dev/null; do
+                until curl -s http://127.0.0.1:8000/health > /dev/null; do
                   sleep 2
                 done
-                curl -s -X POST http://127.0.0.1:8080/v1/audio/speech \
+                curl -s -X POST http://127.0.0.1:8000/v1/audio/speech \
                   -H "Content-Type: application/json" \
                   -d '{"model": "bosonai/higgs-tts-3-4b", "input": "warmup"}' > /dev/null
               ) &
@@ -55,14 +73,13 @@ spec:
               fi
               cd /workspace/sglang-omni
               if [ ! -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ]; then
-                uv venv -p 3.12
+                uv venv "$UV_PROJECT_ENVIRONMENT" -p 3.12
                 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
                 uv pip install -v .
               else
                 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
               fi
-              hf download bosonai/higgs-tts-3-4b
-              exec sgl-omni serve --model-path bosonai/higgs-tts-3-4b --host 0.0.0.0 --port 8080
+              exec sgl-omni serve --model-path bosonai/higgs-tts-3-4b --host 0.0.0.0 --port 8000
           env:
             - name: HF_TOKEN
               valueFrom:
@@ -74,35 +91,35 @@ spec:
             - name: UV_PROJECT_ENVIRONMENT
               value: "/root/.cache/venv"
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
               name: http
           startupProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 8000
             failureThreshold: 360
             periodSeconds: 10
             timeoutSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 8000
             periodSeconds: 15
             timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 8000
             periodSeconds: 10
             timeoutSeconds: 15
           resources:
             limits:
               cpu: "8"
-              memory: "32Gi"
+              memory: "16Gi"
               nvidia.com/gpu: 1
             requests:
               cpu: "4"
-              memory: "16Gi"
+              memory: "8Gi"
               nvidia.com/gpu: 1
           volumeMounts:
             - name: dshm

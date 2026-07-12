@@ -16,7 +16,7 @@ spec:
         - remote-node
       toPorts:
         - ports:
-            - port: "8080"
+            - port: "8000"
               protocol: TCP
     # 2. Allow Istio ztunnel HBONE tunneling
     - toPorts:
@@ -50,14 +50,14 @@ spec:
     # Rule A: Allow Kubelet health checks
     - to:
       - operation:
-          ports: ["8080"]
+          ports: ["8000"]
     # Rule B: Allow SGLang API access from Router/UI
     - from:
       - source:
           principals: ["cluster.local/ns/private-assistant/sa/higgs-serving"]
       to:
       - operation:
-          ports: ["8080"]
+          ports: ["8000"]
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy

@@ -40,7 +40,7 @@ spec:
               PYTHONPATH=/workspace/sglang-omni python3 -m sglang_omni_router.serve \
                 --host 0.0.0.0 \
                 --port 8000 \
-                --worker-urls http://higgs-serving-worker.private-assistant.svc:8080 \
+                --worker-urls http://higgs-serving-worker.private-assistant.svc:8000 \
                 --policy least_request \
                 --model bosonai/higgs-tts-3-4b \
                 --health-failure-threshold 2 \
@@ -52,8 +52,8 @@ spec:
               name: http
           resources:
             limits:
+              cpu: "4"
+              memory: "8Gi"
+            requests:
               cpu: "2"
               memory: "4Gi"
-            requests:
-              cpu: "1"
-              memory: "2Gi"
