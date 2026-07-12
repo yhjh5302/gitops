@@ -18,6 +18,7 @@ spec:
       - name: assistant
         # Client frontend interface and Go Backend unified container
         image: harbor.jin-server.com/docker.io/private-assistant:v1.0.0
+        imagePullPolicy: Always
         env:
         - name: LLM_API_URL
           value: "http://qwen-serving.private-assistant.svc:8000/v1"
