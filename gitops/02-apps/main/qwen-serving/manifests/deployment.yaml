@@ -52,7 +52,7 @@ spec:
               exec vllm serve "Qwen/Qwen3.5-9B" \
                 --host "0.0.0.0" \
                 --port "8000" \
-                --gpu-memory-utilization "0.92" \
+                --gpu-memory-utilization "0.9" \
                 --max-model-len "32768" \
                 --max-num-seqs "64" \
                 --quantization "fp8" \
