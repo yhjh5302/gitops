@@ -31,8 +31,6 @@ spec:
             "k8s:io.kubernetes.pod.namespace": private-assistant
       toPorts:
         - ports:
-            - port: "8080"
-              protocol: TCP
             - port: "8000"
               protocol: TCP
 ---
