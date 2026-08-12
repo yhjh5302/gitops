@@ -2,7 +2,7 @@
 # Kubernetes Kubeadm Cluster Setup Configurations
 
 # Kubernetes Version Series (e.g. v1.35.6)
-export KUBERNETES_VERSION="v1.35.6"
+export KUBERNETES_VERSION="v1.36.3"
 
 # Kubeadm Init Options
 export POD_NETWORK_CIDR="10.233.0.0/16"

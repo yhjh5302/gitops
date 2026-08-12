@@ -17,7 +17,7 @@ if [ -f "${SCRIPT_DIR}/config.sh" ]; then
 fi
 
 # 기본 버전은 config.sh에서 먼저 가져오고, 인자가 주어지면 덮어씁니다.
-default_k8s_ver="${KUBERNETES_VERSION:-v1.35}"
+default_k8s_ver="${KUBERNETES_VERSION:-v1.36}"
 K8S_VERSION="${1:-$default_k8s_ver}"
 
 echo "============================================================="
@@ -27,7 +27,7 @@ echo "============================================================="
 
 # 1. Kubernetes 도구(kubelet, kubeadm, kubectl) 설치 여부 및 버전 매치 체크
 PACKAGES_OK=true
-CLEAN_VER="${K8S_VERSION#v}" # v1.35 -> 1.35
+CLEAN_VER="${K8S_VERSION#v}" # v1.36 -> 1.36
 
 for pkg in kubelet kubeadm kubectl; do
   # 1-1) 패키지 설치 여부 체크
@@ -37,7 +37,7 @@ for pkg in kubelet kubeadm kubectl; do
     break
   fi
   
-  # 1-2) 버전 일치 여부 체크 (예: 설치된 버전이 1.35으로 시작하는지)
+  # 1-2) 버전 일치 여부 체크 (예: 설치된 버전이 1.36으로 시작하는지)
   installed_ver=$(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null || echo "")
   if [[ ! "$installed_ver" =~ ^$CLEAN_VER ]]; then
     echo "-> ${pkg} 버전이 일치하지 않습니다. (설치된 버전: ${installed_ver}, 대상 버전: ${CLEAN_VER}.x)"
@@ -67,7 +67,7 @@ else
   # 기존 파일이 있다면 삭제하여 덮어쓰기 방지 오류 예방
   rm -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-  # KUBERNETES_VERSION에서 마이너 버전(예: v1.35) 추출
+  # KUBERNETES_VERSION에서 마이너 버전(예: v1.36) 추출
   K8S_MINOR_VERSION=$(echo "$K8S_VERSION" | cut -d. -f1,2)
   if [[ ! "$K8S_MINOR_VERSION" =~ ^v ]]; then
     K8S_MINOR_VERSION="v${K8S_MINOR_VERSION}"
