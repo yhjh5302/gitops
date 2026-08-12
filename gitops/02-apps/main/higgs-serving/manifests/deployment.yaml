@@ -88,6 +88,8 @@ spec:
               value: "/root/.cache/uv"
             - name: UV_PROJECT_ENVIRONMENT
               value: "/root/.cache/venv"
+            - name: FLASHINFER_DISABLE_VERSION_CHECK
+              value: "1"
           ports:
             - containerPort: 8000
               name: http

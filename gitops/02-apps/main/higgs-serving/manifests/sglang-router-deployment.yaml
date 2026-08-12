@@ -37,6 +37,7 @@ spec:
               if [ ! -d "/workspace/sglang-omni" ]; then
                 git clone https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
               fi
+              pip3 install websockets --break-system-packages || pip3 install websockets
               PYTHONPATH=/workspace/sglang-omni python3 -m sglang_omni_router.serve \
                 --host 0.0.0.0 \
                 --port 8000 \
