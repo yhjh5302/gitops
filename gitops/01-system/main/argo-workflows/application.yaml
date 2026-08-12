@@ -31,7 +31,7 @@ spec:
           persistence:
             connectionPool:
               maxIdleConns: 100
-              maxOpenConns: 100
+              maxOpenConns: 0
             archive: true
             postgresql:
               host: postgres.postgres.svc

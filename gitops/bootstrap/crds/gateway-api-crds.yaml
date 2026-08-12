@@ -1,4 +1,4 @@
-# Source: https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/experimental-install.yaml
+# Source: https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
 # Copyright The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   labels:
     gateway.networking.k8s.io/policy: Direct
@@ -1445,7 +1445,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: gatewayclasses.gateway.networking.k8s.io
 spec:
@@ -1963,7 +1963,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: gateways.gateway.networking.k8s.io
 spec:
@@ -5306,7 +5306,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: grpcroutes.gateway.networking.k8s.io
 spec:
@@ -7584,7 +7584,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: httproutes.gateway.networking.k8s.io
 spec:
@@ -16119,7 +16119,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: listenersets.gateway.networking.k8s.io
 spec:
@@ -16899,7 +16899,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: referencegrants.gateway.networking.k8s.io
 spec:
@@ -17256,7 +17256,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: tcproutes.gateway.networking.k8s.io
 spec:
@@ -18726,7 +18726,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: tlsroutes.gateway.networking.k8s.io
 spec:
@@ -21111,7 +21111,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: udproutes.gateway.networking.k8s.io
 spec:
@@ -22578,7 +22578,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:
   annotations:
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: standard
   name: "safe-upgrades.gateway.networking.k8s.io"
 spec:
@@ -22612,7 +22612,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicyBinding
 metadata:
   annotations:
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: standard
   name: safe-upgrades.gateway.networking.k8s.io
 spec:
@@ -22635,7 +22635,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: xbackends.gateway.networking.x-k8s.io
 spec:
@@ -23309,7 +23309,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   labels:
     gateway.networking.k8s.io/policy: Direct
@@ -23908,7 +23908,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
     api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.6.0
+    gateway.networking.k8s.io/bundle-version: v1.6.1
     gateway.networking.k8s.io/channel: experimental
   name: xmeshes.gateway.networking.x-k8s.io
 spec:

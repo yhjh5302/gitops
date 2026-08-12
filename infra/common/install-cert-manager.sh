@@ -25,7 +25,7 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
   --version v1.21.1 \
-  --set installCRDs=true \
+  --set crds.enabled=true \
   --wait --timeout 5m
 
 echo -e "\n${GREEN}=============================================================${NC}"

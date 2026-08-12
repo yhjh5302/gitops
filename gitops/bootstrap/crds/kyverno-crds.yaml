@@ -7,8 +7,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -2614,6 +2614,7 @@ spec:
     storage: false
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/crds/templates/kyverno.io/kyverno.io_clustercleanuppolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -2624,8 +2625,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -5231,6 +5232,7 @@ spec:
     storage: false
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/crds/templates/kyverno.io/kyverno.io_clusterpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -5241,8 +5243,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -25587,6 +25589,7 @@ spec:
     storage: false
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/crds/templates/kyverno.io/kyverno.io_globalcontextentries.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -25597,8 +25600,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -26374,6 +26377,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/crds/templates/kyverno.io/kyverno.io_policies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -26384,8 +26388,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -46733,6 +46737,7 @@ spec:
     storage: false
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/crds/templates/kyverno.io/kyverno.io_policyexceptions.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -46743,8 +46748,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -48044,6 +48049,7 @@ spec:
         type: object
     served: true
     storage: false
+
 ---
 # Source: kyverno/charts/crds/templates/kyverno.io/kyverno.io_updaterequests.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -48054,8 +48060,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -48891,6 +48897,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/crds/templates/reports.kyverno.io/reports.kyverno.io_clusterephemeralreports.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -48901,8 +48908,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -49238,6 +49245,7 @@ spec:
     served: true
     storage: true
     subresources: {}
+
 ---
 # Source: kyverno/charts/crds/templates/reports.kyverno.io/reports.kyverno.io_ephemeralreports.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -49248,8 +49256,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -49585,6 +49593,7 @@ spec:
     served: true
     storage: true
     subresources: {}
+
 ---
 # Source: kyverno/charts/crds/templates/wgpolicyk8s.io/wgpolicyk8s.io_clusterpolicyreports.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -49595,8 +49604,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -49956,6 +49965,7 @@ spec:
     served: true
     storage: true
     subresources: {}
+
 ---
 # Source: kyverno/charts/crds/templates/wgpolicyk8s.io/wgpolicyk8s.io_policyreports.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -49966,8 +49976,8 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: kyverno-crds
-    app.kubernetes.io/version: 3.8.1
-    helm.sh/chart: crds-3.8.1
+    app.kubernetes.io/version: 3.8.2
+    helm.sh/chart: crds-3.8.2
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,ServerSideApply=true
     helm.sh/resource-policy: keep
@@ -50326,6 +50336,7 @@ spec:
     served: true
     storage: true
     subresources: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_deletingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -52007,6 +52018,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_generatingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -53877,6 +53889,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_imagevalidatingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -60784,6 +60797,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_mutatingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -67367,6 +67381,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_namespaceddeletingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -68495,6 +68510,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_namespacedgeneratingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -69753,6 +69769,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_namespacedimagevalidatingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -74365,6 +74382,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_namespacedmutatingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -78761,6 +78779,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_namespacedvalidatingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -81909,6 +81928,7 @@ spec:
     storage: true
     subresources:
       status: {}
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_policyexceptions.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -82269,6 +82289,7 @@ spec:
         type: object
     served: true
     storage: true
+
 ---
 # Source: kyverno/charts/kyverno-api/templates/crds/policies.kyverno.io_validatingpolicies.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -86980,3 +87001,4 @@ spec:
     storage: true
     subresources:
       status: {}
+
