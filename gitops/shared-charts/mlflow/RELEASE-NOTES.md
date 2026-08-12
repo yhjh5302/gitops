@@ -1,6 +1,6 @@
 # Changelog
 
-- **Changed**: Update dbchecker image version to 1.38.0
-    - [dbchecker](https://hub.docker.com/r/library/busybox)
-- **Changed**: Update ini-file-initializer image version to 1.38.0
-    - [ini-file-initializer](https://hub.docker.com/r/library/busybox)
+- **Changed**: Update burakince/mlflow image version to 3.15.1
+    - [Upstream Project](https://hub.docker.com/r/burakince/mlflow)
+- **Changed**: Update dependency postgresql from 18.8.4 to 18.8.6
+    - [ArtifactHub](https://artifacthub.io/packages/helm/bitnami/postgresql)

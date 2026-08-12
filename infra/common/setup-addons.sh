@@ -28,6 +28,10 @@ if ! kubectl cluster-info &>/dev/null; then
 fi
 echo " -> ✓ 쿠버네티스 클러스터 연결 확인 완료."
 
+# 1-1. 과도기 CSR 자동 승인 (부트스트랩 전 노드 통신 보장)
+echo " -> [보조] 펜딩 상태인 kubelet CSR 자동 승인 중..."
+kubectl get csr 2>/dev/null | grep Pending | awk '{print $1}' | xargs -r kubectl certificate approve >/dev/null 2>&1 || true
+
 # 2. 애드온 검증 및 설치 공통 함수 정의
 check_and_install_addon() {
   local release_name="$1"

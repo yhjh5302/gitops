@@ -105,11 +105,11 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 
 | Layer | Component Name | Base Version / Image Tag | Helm Chart Version | Remarks |
 | :--- | :--- | :--- | :--- | :--- |
-| **OS / K8s** | Kubernetes | `v1.35.6` | - | Native DRA v1 support |
-| **Infra Addons** | Cilium CNI | `1.19.5` | `1.19.5` | eBPF host routing (KubeProxyReplacement) |
-| **Infra Addons** | HashiCorp Vault | `2.0.2` | `0.33.0` | Raft HA Mode |
-| **Infra Addons** | External Secrets | `v2.7.0` | `2.7.0` | Synchronizes Vault secrets to K8s |
-| **Infra Addons** | Cert Manager | `v1.20.3` | `v1.20.3` | Handles PKI and certificate issuance |
+| **OS / K8s** | Kubernetes | `v1.36.3` | - | Native DRA v1 support |
+| **Infra Addons** | Cilium CNI | `1.20.0` | `1.20.0` | eBPF host routing (KubeProxyReplacement) |
+| **Infra Addons** | HashiCorp Vault | `2.0.2` | `0.34.0` | Raft HA Mode |
+| **Infra Addons** | External Secrets | `v2.9.0` | `2.9.0` | Synchronizes Vault secrets to K8s |
+| **Infra Addons** | Cert Manager | `v1.21.1` | `v1.21.1` | Handles PKI and certificate issuance |
 | **GitOps System**| Argo CD | `v3.4.4` | `10.1.0` | Central continuous deployment engine |
 | **GitOps System**| Keycloak IDP | `26.5.4` | `3.0.6` | OIDC Identity Provider (Image tag overridden in manifest) |
 | **GitOps System**| PostgreSQL | `18-alpine` | - | Shared DB for Keycloak, MLflow, and Argo |

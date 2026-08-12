@@ -70,7 +70,7 @@ EXTRA_VAULT_ARGS=(
 # server.dataStorage.enabled=true (물리 PVC 동적 볼륨 매핑)
 # --wait 옵션은 Unseal이 끝나야 Pod가 Ready가 되므로, Helm 단계에선 대기하지 않고 스크립트에서 제어합니다.
 helm upgrade --install vault hashicorp/vault \
-  --version 0.33.0 \
+  --version 0.34.0 \
   --namespace vault \
   --set "server.dev.enabled=false" \
   --set "server.ha.enabled=true" \

@@ -11,6 +11,10 @@ global:
   cluster:
     # -- K8s cluster domain suffix, uses for building storage pods' FQDN. Details are [here](https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/)
     dnsDomain: cluster.local.
+  # -- Labels added to all resources
+  extraLabels: {}
+  # -- Annotations added to all resources
+  extraAnnotations: {}
 # Default values for victoria-metrics.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -230,6 +234,13 @@ operator:
   # -- Enables ownership reference for converted prometheus-operator objects,
   # it will remove corresponding victoria-metrics objects in case of deletion prometheus one.
   enable_converter_ownership: false
+  # -- Enables OpenShift compatibility mode for the operator (supported since v0.73.0).
+  # When enabled, operator automatically adjusts security contexts and permissions for OpenShift clusters.
+  openshift_compatibility: false
+  # -- Enable VPA support
+  vpa_support: false
+  # -- Enable Gateway API support
+  gateway_support: false
 
 # -- By default, the operator will watch all the namespaces
 # If you want to override this behavior, specify the namespace.
@@ -272,6 +283,8 @@ service:
   ipFamilies: []
   # -- Service port
   servicePort: 8080
+  # -- Service node port
+  nodePort: ""
   # -- Service webhook port
   webhookPort: 9443
 
@@ -314,6 +327,8 @@ strategy:
 
 # -- Name of Priority Class
 priorityClassName: ""
+# -- Name of the [RuntimeClass](https://kubernetes.io/docs/concepts/containers/runtime-class/) used to run the pod, e.g. "gvisor"
+runtimeClassName: ""
 
 # -- Array of tolerations object. Spec is [here](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/)
 tolerations: []

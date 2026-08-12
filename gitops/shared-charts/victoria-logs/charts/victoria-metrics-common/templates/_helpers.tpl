@@ -84,9 +84,14 @@ If release name contains chart name it will be used as a full name.
   {{- if empty $fullname -}}
     {{- $fullname = include "vm.fullname" . -}}
   {{- end -}}
+  {{- $isLegacy := eq (include "vm.useLegacyNaming" .) "true" -}}
   {{- with include "vm.internal.key.default" . -}}
-    {{- $prefix := ternary . (printf "vm%s" .) (or (hasPrefix "vm" .) (hasPrefix "vl" .)) -}}
-    {{- $fullname = printf "%s-%s" $prefix $fullname -}}
+    {{- $prefix := ternary . (printf "vm%s" .) (or (hasPrefix "vm" .) (hasPrefix "vl" .) (hasPrefix "vt" .)) -}}
+    {{- if $isLegacy -}}
+      {{- $fullname = printf "%s-%s" $fullname $prefix -}}
+    {{- else -}}
+      {{- $fullname = printf "%s-%s" $prefix $fullname -}}
+    {{- end -}}
   {{- end -}}
   {{- $fullname = tpl $fullname . -}}
   {{- if or ($Values.global).disableNameTruncation $Values.disableNameTruncation -}}
@@ -96,15 +101,72 @@ If release name contains chart name it will be used as a full name.
   {{- end -}}
 {{- end -}}
 
+{{- /*
+vm.operator.kind returns the operator resource-name prefix for the current
+component (e.g. "vlsingle", "vminsert", "vmalertmanager").
+Rules (checked in order):
+  1. appKey already has vm/vl/vt prefix → use as-is (cluster components)
+  2. empty appKey or "server"           → derive from chart name
+  3. other named sub-component          → chart prefix + appKey
+*/ -}}
+{{- define "vm.operator.kind" -}}
+  {{- $appKey := include "vm.internal.key.default" . -}}
+  {{- $Chart  := (.helm).Chart | default .Chart -}}
+  {{- $p := "vm" -}}
+  {{- if hasPrefix "victoria-logs" $Chart.Name -}}{{- $p = "vl" -}}{{- end -}}
+  {{- if hasPrefix "victoria-traces" $Chart.Name -}}{{- $p = "vt" -}}{{- end -}}
+  {{- if or (hasPrefix "vm" $appKey) (hasPrefix "vl" $appKey) (hasPrefix "vt" $appKey) -}}
+    {{- $appKey -}}
+  {{- else if or (empty $appKey) (eq $appKey "server") -}}
+    {{- printf "%s%s" $p (regexReplaceAll "^victoria-(metrics|logs|traces)-" $Chart.Name "") -}}
+  {{- else -}}
+    {{- printf "%s%s" $p $appKey -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /*
+vm.useLegacyNaming resolves the effective useLegacyNaming setting for the current context.
+It traverses the appKey path in Values so that per-component settings (e.g.
+.Values.vmsingle.spec.useLegacyNaming) take precedence over the chart-level
+.Values.useLegacyNaming.
+Returns "true", "false", or "" (not set at any level).
+*/ -}}
+{{- define "vm.useLegacyNaming" -}}
+  {{- $Values := (.helm).Values | default .Values -}}
+  {{- $result := "" -}}
+  {{- if hasKey $Values "useLegacyNaming" -}}
+    {{- $result = ternary "true" "false" $Values.useLegacyNaming -}}
+  {{- end -}}
+  {{- $appKey := list -}}
+  {{- if .appKey -}}
+    {{- $appKey = ternary (list .appKey) .appKey (kindIs "string" .appKey) -}}
+  {{- end -}}
+  {{- $values := $Values -}}
+  {{- range $ak := $appKey -}}
+    {{- if kindIs "map" $values -}}
+      {{- $values = index $values $ak | default dict -}}
+      {{- if and (kindIs "map" $values) (hasKey $values "useLegacyNaming") -}}
+        {{- $result = ternary "true" "false" (index $values "useLegacyNaming") -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $result -}}
+{{- end -}}
+
 {{- define "vm.plain.fullname" -}}
   {{- $Values := (.helm).Values | default .Values -}}
   {{- $_ := set . "overrideKey" "fullnameOverride" -}}
   {{- $fullname := include "vm.internal.key" . -}}
   {{- $_ := unset . "overrideKey" -}}
   {{- if empty $fullname -}}
-    {{- $fullname = include "vm.fullname" . -}}
-    {{- with include "vm.internal.key.default" . -}}
-      {{- $fullname = printf "%s-%s" $fullname . -}}
+    {{- if eq (include "vm.useLegacyNaming" .) "false" -}}
+      {{- $release := ((.helm).Release | default .Release).Name -}}
+      {{- $fullname = printf "%s-%s" (include "vm.operator.kind" .) $release -}}
+    {{- else -}}
+      {{- $fullname = include "vm.fullname" . -}}
+      {{- with include "vm.internal.key.default" . -}}
+        {{- $fullname = printf "%s-%s" $fullname . -}}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
   {{- $fullname = tpl $fullname . -}}
@@ -175,13 +237,33 @@ If release name contains chart name it will be used as a full name.
 {{- define "vm.podLabels" -}}
   {{- include "vm.validate.args" . -}}
   {{- $Release := (.helm).Release | default .Release -}}
+  {{- $Values := (.helm).Values | default .Values -}}
+  {{- $globalLabels := deepCopy (($Values.global).extraLabels | default dict) -}}
   {{- $labels := fromYaml (include "vm.selectorLabels" .) -}}
   {{- with $labels.app -}}
     {{- $_ := set $labels "app.kubernetes.io/component" . -}}
   {{- end -}}
-  {{- $labels = mergeOverwrite $labels (.extraLabels | default dict) -}}
+  {{- $labels = mergeOverwrite $globalLabels $labels (.extraLabels | default dict) -}}
   {{- $_ := set $labels "app.kubernetes.io/managed-by" $Release.Service -}}
   {{- toYaml $labels -}}
+{{- end -}}
+
+{{- define "vm.annotations" -}}
+  {{- include "vm.validate.args" . -}}
+  {{- $Values := (.helm).Values | default .Values -}}
+  {{- $globalAnnotations := deepCopy (($Values.global).extraAnnotations | default dict) -}}
+  {{- $annotations := mergeOverwrite $globalAnnotations (.extraAnnotations | default dict) -}}
+  {{- if $annotations -}}
+    {{- toYaml $annotations -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "vm.keyValue" -}}
+  {{- $pairs := list -}}
+  {{- range $k, $v := . -}}
+    {{- $pairs = append $pairs (printf "%s=%s" $k $v) -}}
+  {{- end -}}
+  {{- join "," ($pairs | sortAlpha) -}}
 {{- end -}}
 
 {{- /* Common labels */ -}}

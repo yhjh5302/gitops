@@ -7,6 +7,29 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITOPS_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# Automatically register and update required Helm repositories
+echo "-> Checking and registering required Helm repositories..."
+declare -A repos=(
+  ["argo"]="https://argoproj.github.io/argo-helm"
+  ["nvidia"]="https://helm.ngc.nvidia.com/nvidia"
+  ["community-charts"]="https://community-charts.github.io/helm-charts"
+  ["helmforge"]="https://repo.helmforge.dev"
+  ["kyverno"]="https://kyverno.github.io/kyverno/"
+  ["victoria-metrics"]="https://victoriametrics.github.io/helm-charts/"
+  ["vector"]="https://helm.vector.dev"
+  ["oauth2-proxy"]="https://oauth2-proxy.github.io/manifests"
+  ["open-telemetry"]="https://open-telemetry.github.io/opentelemetry-helm-charts"
+  ["istio"]="https://istio-release.storage.googleapis.com/charts"
+)
+
+for repo_name in "${!repos[@]}"; do
+  helm repo add "$repo_name" "${repos[$repo_name]}" --force-update >/dev/null
+done
+echo "-> Updating Helm repositories (this may take a few seconds)..."
+helm repo update >/dev/null
+echo "✓ Helm repositories synchronized successfully."
+echo
+
 echo "========================================================================================================"
 echo "                               GitOps System Components Version Dashboard"
 echo "========================================================================================================"
@@ -98,8 +121,8 @@ for key in "${keys[@]}"; do
   
   if [ "$key" = "kgateway" ]; then
     # OCI-based K-Gateway static target update
-    remote_chart="v2.3.5"
-    remote_app="v2.3.5"
+    remote_chart="v2.4.2"
+    remote_app="v2.4.2"
   elif [ "$key" = "nvidia-dra-driver" ]; then
     # OCI-based NVIDIA DRA Driver static target update
     remote_chart="0.4.1"

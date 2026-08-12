@@ -1,7 +1,7 @@
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
-    - added `vm.openshift.serviceCA.volume` and `vm.openshift.serviceCA.volumeMount` helpers to conditionally mount the OpenShift service signing CA (`openshift-service-ca.crt` ConfigMap)
+    - 'updated `vm.namespace` to resolve per-component namespace override: when `appKey` is set in the template context, the first key is used to look up `<component>.namespaceOverride` in chart values. Component-level namespace takes precedence over chart-wide `namespaceOverride` and `global.namespaceOverride`. Enables `victoria-metrics-k8s-stack` to deploy individual CRs into separate namespaces. See [#3113](https://github.com/VictoriaMetrics/helm-charts/issues/3113)'
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Sources
@@ -30,4 +30,4 @@ name: victoria-metrics-common
 sources:
 - https://github.com/VictoriaMetrics/helm-charts
 type: library
-version: 0.3.15
+version: 0.3.16

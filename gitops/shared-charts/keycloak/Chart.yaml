@@ -2,7 +2,9 @@ annotations:
   artifacthub.io/category: security
   artifacthub.io/changes: |
     - kind: changed
-      description: "bump keycloak to 26.6.4 (#614)"
+      description: "bump keycloak to 26.7.1 (#960)"
+    - kind: changed
+      description: "align 26.7 rollout guidance (#765)"
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Official Website
@@ -28,7 +30,7 @@ annotations:
   helmforge.dev/repository: https://repo.helmforge.dev
   helmforge.dev/signed: gpg+cosign
 apiVersion: v2
-appVersion: 26.6.4
+appVersion: 26.7.1
 dependencies:
 - condition: postgresql.enabled
   name: postgresql
@@ -52,4 +54,4 @@ maintainers:
 - name: mberlofa
 name: keycloak
 type: application
-version: 3.0.6
+version: 3.0.8

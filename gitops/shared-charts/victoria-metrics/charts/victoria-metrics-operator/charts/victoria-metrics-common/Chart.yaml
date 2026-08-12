@@ -1,7 +1,7 @@
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
-    - '`vm.probe`: fix TLS probe misconfiguration — when a TLS primary listener was configured and the probe used an explicit `httpGet` (e.g. `scheme: HTTPS`), the probe was silently replaced with `tcpSocket: null`, causing Kubernetes to reject the resource. An explicit `httpGet` is now always preserved; only an empty `httpGet: {}` triggers the automatic fallback to `tcpSocket`.'
+    - added `vm.openshift.serviceCA.volume` and `vm.openshift.serviceCA.volumeMount` helpers to conditionally mount the OpenShift service signing CA (`openshift-service-ca.crt` ConfigMap)
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Sources
@@ -30,4 +30,4 @@ name: victoria-metrics-common
 sources:
 - https://github.com/VictoriaMetrics/helm-charts
 type: library
-version: 0.3.9
+version: 0.3.15
