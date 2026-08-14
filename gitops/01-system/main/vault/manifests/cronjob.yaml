@@ -48,7 +48,7 @@ metadata:
   name: vault-auto-unsealer
   namespace: vault
 spec:
-  schedule: "*/1 * * * *" # 1분마다 실행
+  schedule: "*/15 * * * *" # 15분마다 실행
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
