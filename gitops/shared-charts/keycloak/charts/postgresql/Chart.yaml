@@ -2,8 +2,8 @@ annotations:
   artifacthub.io/alternativeName: postgres
   artifacthub.io/category: database
   artifacthub.io/changes: |
-    - kind: fixed
-      description: "complete chart standards (#543)"
+    - kind: changed
+      description: "bump postgresql to 18.6 (#1008)"
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Official Website
@@ -28,7 +28,7 @@ annotations:
   helmforge.dev/repository: https://repo.helmforge.dev
   helmforge.dev/signed: gpg+cosign
 apiVersion: v2
-appVersion: "18.4"
+appVersion: "18.6"
 description: PostgreSQL for Kubernetes with explicit standalone and replication modes
 home: https://helmforge.dev
 icon: https://helmforge.dev/icons/charts/postgresql.png
@@ -46,4 +46,4 @@ sources:
 - https://github.com/helmforgedev/charts
 - https://hub.docker.com/_/postgres
 type: application
-version: 2.0.4
+version: 2.0.5

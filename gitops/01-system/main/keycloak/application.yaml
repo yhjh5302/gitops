@@ -23,7 +23,7 @@ spec:
         mode: production
         image:
           repository: quay.io/keycloak/keycloak
-          tag: "26.5.4"
+          tag: "26.7.2"
         realmImport:
           enabled: true
           files:
@@ -151,7 +151,7 @@ spec:
                       "http://localhost:4180/oauth2/callback"
                     ],
                     "webOrigins": [
-                      "*"
+                      "+"
                     ],
                     "defaultClientScopes": [
                       "web-origins",
@@ -185,7 +185,7 @@ spec:
                       "https://argocd.jin-server.com/auth/callback"
                     ],
                     "webOrigins": [
-                      "*"
+                      "+"
                     ],
                     "defaultClientScopes": [
                       "web-origins",
@@ -219,7 +219,7 @@ spec:
                       "https://grafana.jin-server.com/login/generic_oauth"
                     ],
                     "webOrigins": [
-                      "*"
+                      "+"
                     ],
                     "defaultClientScopes": [
                       "web-origins",
@@ -253,7 +253,7 @@ spec:
                       "https://workflows.jin-server.com/oauth2/callback"
                     ],
                     "webOrigins": [
-                      "*"
+                      "+"
                     ],
                     "defaultClientScopes": [
                       "web-origins",

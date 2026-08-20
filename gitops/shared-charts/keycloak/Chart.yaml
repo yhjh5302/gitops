@@ -2,9 +2,7 @@ annotations:
   artifacthub.io/category: security
   artifacthub.io/changes: |
     - kind: changed
-      description: "bump keycloak to 26.7.1 (#960)"
-    - kind: changed
-      description: "align 26.7 rollout guidance (#765)"
+      description: "bump HelmForge subchart dependencies to latest minor/patch (#1011)"
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Official Website
@@ -35,11 +33,11 @@ dependencies:
 - condition: postgresql.enabled
   name: postgresql
   repository: oci://ghcr.io/helmforgedev/helm
-  version: 2.0.4
+  version: 2.0.5
 - condition: mysql.enabled
   name: mysql
   repository: oci://ghcr.io/helmforgedev/helm
-  version: 2.0.2
+  version: 2.0.3
 description: Keycloak for Kubernetes with explicit dev and production modes
 home: https://helmforge.dev
 icon: https://helmforge.dev/icons/charts/keycloak.png
@@ -54,4 +52,4 @@ maintainers:
 - name: mberlofa
 name: keycloak
 type: application
-version: 3.0.8
+version: 3.0.10

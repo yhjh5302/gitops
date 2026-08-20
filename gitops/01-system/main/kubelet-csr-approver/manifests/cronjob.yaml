@@ -21,11 +21,100 @@ spec:
             - /bin/sh
             - -c
             - |
-              PENDING_CSRS=$(kubectl get csr 2>/dev/null | grep -i 'Pending' | awk '{print $1}' || echo '')
-              if [ -n "${PENDING_CSRS}" ]; then
-                echo "[INFO] Found pending CSRs to approve:"
-                echo "${PENDING_CSRS}"
-                echo "${PENDING_CSRS}" | xargs -r kubectl certificate approve
-              else
-                echo "[INFO] No pending CSRs found at this moment."
+              set -eu
+
+              echo "[INFO] Kubelet Serving CSR 검증 및 자동 승인 프로세스 시작..."
+
+              # Pending 상태인 CSR 리스트 추출
+              CSR_LIST=$(kubectl get csr -o json 2>/dev/null | jq -r '
+                .items[] | 
+                select(.status.conditions == null or (.status.conditions | length == 0)) | 
+                .metadata.name
+              ' || echo '')
+
+              if [ -z "${CSR_LIST}" ]; then
+                echo "[INFO] 대기 중인(Pending) CSR이 없습니다."
+                exit 0
               fi
+
+              for csr_name in ${CSR_LIST}; do
+                echo "--------------------------------------------------"
+                echo "[검증 진행] CSR: ${csr_name}"
+                
+                CSR_JSON=$(kubectl get csr "${csr_name}" -o json 2>/dev/null || echo '')
+                if [ -z "${CSR_JSON}" ]; then
+                  echo "[경고] CSR 정보를 가져오지 못했습니다: ${csr_name}"
+                  continue
+                fi
+
+                # 1. SignerName 검증 (오직 Kubelet Serving 인증서 요청만 허용)
+                SIGNER_NAME=$(echo "${CSR_JSON}" | jq -r '.spec.signerName // empty')
+                if [ "${SIGNER_NAME}" != "kubernetes.io/kubelet-serving" ]; then
+                  echo "[스킵] 허용되지 않은 SignerName: '${SIGNER_NAME}' (Kubelet Serving 인증서가 아님)"
+                  continue
+                fi
+
+                # 2. 요청자 Username 검증 ('system:node:<노드명>' 형식 필수)
+                REQ_USER=$(echo "${CSR_JSON}" | jq -r '.spec.username // empty')
+                if ! echo "${REQ_USER}" | grep -qE '^system:node:[a-zA-Z0-9.-]+$'; then
+                  echo "[거부] Kubelet 노드 요청자 형식이 아님: '${REQ_USER}'"
+                  continue
+                fi
+                NODE_NAME=$(echo "${REQ_USER}" | sed 's/^system:node://')
+
+                # 3. 클러스터 등록 노드 존재 여부 및 실제 노드 IP 조회
+                if ! kubectl get node "${NODE_NAME}" >/dev/null 2>&1; then
+                  echo "[거부] 클러스터에 등록되지 않은 노드 이름: '${NODE_NAME}'"
+                  continue
+                fi
+                ACTUAL_NODE_IPS=$(kubectl get node "${NODE_NAME}" -o jsonpath='{.status.addresses[*].address}' 2>/dev/null || echo '')
+
+                # 4. x509 CSR 디코딩 및 Subject (CN, O) 검증
+                CSR_CERT_REQ=$(echo "${CSR_JSON}" | jq -r '.spec.request // empty')
+                if [ -z "${CSR_CERT_REQ}" ]; then
+                  echo "[거부] CSR 요청 인증서 본문이 비어있음"
+                  continue
+                fi
+
+                CERT_TEXT=$(echo "${CSR_CERT_REQ}" | base64 -d | openssl req -noout -text 2>/dev/null || echo '')
+                if [ -z "${CERT_TEXT}" ]; then
+                  echo "[거부] CSR x509 인증서 파싱 실패"
+                  continue
+                fi
+
+                # Subject CN = system:node:<노드명> 검증
+                if ! echo "${CERT_TEXT}" | grep -qiE "Subject:.*CN\s*=\s*system:node:${NODE_NAME}"; then
+                  echo "[거부] CSR Subject CN이 요청 노드명('${NODE_NAME}')과 일치하지 않음"
+                  continue
+                fi
+
+                # Subject O = system:nodes 검증
+                if ! echo "${CERT_TEXT}" | grep -qiE "Subject:.*O\s*=\s*system:nodes"; then
+                  echo "[거부] CSR Subject O(Organization)가 'system:nodes'가 아님"
+                  continue
+                fi
+
+                # 5. SAN(Subject Alternative Name) 위조 방지 검증
+                # SAN에 명시된 모든 IP가 실제 해당 노드의 등록된 IP 목록에 포함되어야 함
+                CSR_IPS=$(echo "${CERT_TEXT}" | grep -A1 "Subject Alternative Name" | grep -oE "IP Address:[0-9.]+" | sed 's/IP Address://' || echo '')
+                
+                INVALID_IP=false
+                for ip in ${CSR_IPS}; do
+                  if ! echo "${ACTUAL_NODE_IPS}" | grep -qw "${ip}"; then
+                    echo "[거부] 노드 등록 IP(${ACTUAL_NODE_IPS})와 CSR SAN IP(${ip}) 불일치 (IP 스푸핑 의심)"
+                    INVALID_IP=true
+                    break
+                  fi
+                done
+
+                if [ "${INVALID_IP}" = "true" ]; then
+                  continue
+                fi
+
+                # 6. 모든 보안 검증 통과 -> 안전하게 승인
+                echo "[승인] ✓ 모든 보안 검증 통과! 노드 '${NODE_NAME}'의 Serving CSR(${csr_name})을 승인합니다."
+                kubectl certificate approve "${csr_name}"
+              done
+
+              echo "--------------------------------------------------"
+              echo "[INFO] Kubelet Serving CSR 검증 완료."

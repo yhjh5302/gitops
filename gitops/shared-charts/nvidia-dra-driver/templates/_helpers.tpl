@@ -196,3 +196,41 @@ resource.k8s.io/v1beta1
 {{- else -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Returns "true" when resources.computeDomains.imex.mode is exactly
+"hostManaged", empty string otherwise. Used only to control structural
+rendering (omitting the compute-domain-daemon DeviceClass/RBAC).
+*/}}
+{{- define "dra-driver-nvidia-gpu.hostManagedIMEX" -}}
+{{- if eq (toString (dig "mode" "" (.Values.resources.computeDomains.imex | default dict))) "hostManaged" -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validates resources.computeDomains.imex.mode / .isolation against
+featureGates.HostManagedIMEXDaemon so `helm install`/`helm template` fails fast
+with a clear message instead of the controller/kubelet-plugin pods crash-looping
+on an invalid combination. Produces no output on success.
+*/}}
+{{- define "dra-driver-nvidia-gpu.validateIMEXConfig" -}}
+{{- $imex := .Values.resources.computeDomains.imex | default dict -}}
+{{- $mode := toString (dig "mode" "driverManaged" $imex) -}}
+{{- $isolation := toString (dig "isolation" "domain" $imex) -}}
+{{- $gateEnabled := and .Values.featureGates (and (hasKey .Values.featureGates "HostManagedIMEXDaemon") .Values.featureGates.HostManagedIMEXDaemon) -}}
+{{- if eq $mode "hostManaged" -}}
+  {{- if not $gateEnabled -}}
+    {{- fail "resources.computeDomains.imex.mode=hostManaged requires featureGates.HostManagedIMEXDaemon=true" -}}
+  {{- end -}}
+{{- else if ne $mode "driverManaged" -}}
+  {{- fail (printf "unknown resources.computeDomains.imex.mode %q: must be \"driverManaged\" or \"hostManaged\"" $mode) -}}
+{{- end -}}
+{{- if and (ne $isolation "") (ne $isolation "domain") -}}
+  {{- if eq $isolation "channel" -}}
+    {{- fail "resources.computeDomains.imex.isolation=channel is not supported yet: per-workload IMEX channel allocation is not implemented. Use the default, \"domain\"." -}}
+  {{- else -}}
+    {{- fail (printf "unknown resources.computeDomains.imex.isolation %q: must be \"domain\" or \"channel\"" $isolation) -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}

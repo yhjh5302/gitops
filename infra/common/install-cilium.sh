@@ -56,7 +56,7 @@ fi
 
 echo "4단계: Cilium CNI 설치 (Kube-Proxy 대체 모드 및 eBPF 호스트 라우팅)"
 helm upgrade --install cilium cilium/cilium \
-  --version 1.20.0 \
+  --version 1.20.1 \
   --namespace kube-system \
   --set k8sServiceHost="${K8S_SERVICE_HOST}" \
   --set k8sServicePort="${K8S_SERVICE_PORT}" \

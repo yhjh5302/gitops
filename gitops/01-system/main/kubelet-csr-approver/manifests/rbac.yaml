@@ -18,6 +18,9 @@ rules:
 - apiGroups: ["certificates.k8s.io"]
   resources: ["certificatesigningrequests/status"]
   verbs: ["update", "patch"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

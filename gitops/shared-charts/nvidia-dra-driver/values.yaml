@@ -38,6 +38,8 @@ fullnameOverride: ""
 namespaceOverride: ""
 selectorLabelsOverride: {}
 gpuResourcesEnabledOverride: false
+# Configure consumable shares support ("disabled", "memory", "unlimited", or a positive integer)
+consumableShares: ""
 
 allowDefaultNamespace: false
 
@@ -79,7 +81,30 @@ resources:
     enabled: true
   computeDomains:
     enabled: true
-
+    # Changing `imex.mode` or `imex.isolation` on a cluster with active ComputeDomain workloads
+    # is not supported and is not enforced by the driver, drain and remove existing ComputeDomains first.
+    imex:
+      # mode selects the deployment mode of the IMEX daemon in the cluster. It tells
+      #   who owns the nvidia-imex daemon lifecycle:
+      #   driverManaged (default): the driver creates and manages a
+      #     per-ComputeDomain nvidia-imex DaemonSet.
+      #   hostManaged: the cluster administrator runs nvidia-imex as a host service
+      #     and the driver only advertises/injects an IMEX channel device
+      #     Requires featureGates.HostManagedIMEXDaemon=true
+      mode: driverManaged
+      # isolation selects the IMEX isolation strategy. The value can be one of:
+      #   domain (default): In this mode, all workloads running in the
+      #     same IMEX domain will share the same channel (0).
+      #   channel: not supported. In this mode, each workload will get a unique
+      #     channel within an IMEX domain.
+      isolation: "domain"
+      # hostSocketPath is the path (under the driver root) to the Unix domain
+      # socket the host nvidia-imex daemon's command/control service listens
+      # on. Only used when mode=hostManaged: the kubelet plugin uses it to
+      # validate host IMEX readiness (via `nvidia-imex-ctl -q --u=<path>`) during channel claim prepare.
+      # Requires the host's /etc/nvidia-imex/config.cfg to set IMEX_CMD_ENABLED to 1 and
+      # IMEX_CMD_UNIX_DOMAIN_PATH to this same path.
+      hostSocketPath: "/etc/nvidia-imex/imex_ctrl.sock"
 
 # Feature gates configuration following Kubernetes patterns
 # Configure feature gates as key-value pairs (feature_name: true/false)
@@ -90,6 +115,9 @@ resources:
 #   LoggingAlphaOptions: false         # Kubernetes logging alpha features
 #   LoggingBetaOptions: true           # Kubernetes logging beta features
 #   NVMLDeviceHealthCheck: false       # GPU Health Checking using NVML
+#   HostManagedIMEXDaemon: false       # Gate allowing resources.computeDomains.imex.mode=hostManaged
+#   DRAListTypeAttributes: false       # Publish list-valued DRA device attributes
+#   ConsumableShares: false            # Publish consumable capacity and multi-allocation support for devices
 featureGates: {}
 
 # Log verbosity for all components. Zero or greater, higher number means higher
@@ -277,6 +305,9 @@ kubeletPlugin:
       # Port running a gRPC health service checked by a livenessProbe.
       # Set to a negative value to disable the service and the probe.
       healthcheckPort: 51515
+      # Set the nvidia.com/gpu.clique node label, historically set by
+      # gpu-feature-discovery. Disabled by default.
+      gpuCliqueLabelEnabled: false
     gpus:
       env: []
       securityContext:

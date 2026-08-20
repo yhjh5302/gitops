@@ -1,7 +1,8 @@
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
-    - 'fixed sync-job ignoring `defaultRules.rules.<name>.enabled: false`, causing disabled rules to reappear in generated VMRule resources. See [#3151](https://github.com/VictoriaMetrics/helm-charts/issues/3151)'
+    - bump version of VM components to [v1.150.0](https://github.com/VictoriaMetrics/VictoriaMetrics/releases/tag/v1.150.0)
+    - fixed sync-job deleting all rules and dashboards on upstream HTTP errors. The job now aborts on any fetch failure instead of treating missing data as orphaned resources. HTTP 429 is now retried like 5xx errors. See [#3163](https://github.com/VictoriaMetrics/helm-charts/issues/3163)
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Sources
@@ -23,7 +24,7 @@ annotations:
     Chart documentation is available [here](https://docs.victoriametrics.com/helm/victoria-metrics-k8s-stack/).
     Changelog is [here](https://docs.victoriametrics.com/helm/victoria-metrics-k8s-stack/changelog/).
 apiVersion: v2
-appVersion: v1.149.0
+appVersion: v1.150.0
 dependencies:
 - name: victoria-metrics-common
   repository: oci://ghcr.io/victoriametrics/helm-charts
@@ -63,4 +64,4 @@ name: victoria-metrics-k8s-stack
 sources:
 - https://github.com/VictoriaMetrics/helm-charts
 type: application
-version: 0.90.2
+version: 0.91.0

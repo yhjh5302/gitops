@@ -106,26 +106,26 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 | Layer | Component Name | Base Version / Image Tag | Helm Chart Version | Remarks |
 | :--- | :--- | :--- | :--- | :--- |
 | **OS / K8s** | Kubernetes | `v1.36.3` | - | Native DRA v1 support |
-| **Infra Addons** | Cilium CNI | `1.20.0` | `1.20.0` | eBPF host routing (KubeProxyReplacement) |
-| **Infra Addons** | HashiCorp Vault | `2.0.2` | `0.34.0` | Raft HA Mode |
+| **Infra Addons** | Cilium CNI | `1.20.1` | `1.20.1` | eBPF host routing (KubeProxyReplacement) |
+| **Infra Addons** | HashiCorp Vault | `2.0.4` | `0.34.1` | Raft HA Mode |
 | **Infra Addons** | External Secrets | `v2.9.0` | `2.9.0` | Synchronizes Vault secrets to K8s |
 | **Infra Addons** | Cert Manager | `v1.21.1` | `v1.21.1` | Handles PKI and certificate issuance |
-| **GitOps System**| Argo CD | `v3.4.4` | `10.1.0` | Central continuous deployment engine |
-| **GitOps System**| Keycloak IDP | `26.5.4` | `3.0.6` | OIDC Identity Provider (Image tag overridden in manifest) |
+| **GitOps System**| Argo CD | `v3.4.4` | `10.4.0` | Central continuous deployment engine |
+| **GitOps System**| Keycloak IDP | `26.7.2` | `3.0.10` | OIDC Identity Provider (Image tag overridden in manifest) |
 | **GitOps System**| PostgreSQL | `18-alpine` | - | Shared DB for Keycloak, MLflow, and Argo |
 | **GitOps System**| Valkey | `9.1.0-alpine` | - | Redis successor for caching |
-| **GitOps System**| OpenTelemetry Collector | `0.154.0` | `0.162.0` | Unified metrics & logs collector |
-| **GitOps System**| Istio (Ambient) | `1.30.2` | `1.30.2` | L4/L7 sidecarless service mesh |
-| **GitOps System**| K-Gateway | `v2.3.5` | `v2.3.5` | Envoy-based user ingress gateway (Deprecated in favor of Istio Service Gateway) |
+| **GitOps System**| OpenTelemetry Collector | `0.158.0` | `0.170.0` | Unified metrics & logs collector |
+| **GitOps System**| Istio (Ambient) | `1.30.3` | `1.30.3` | L4/L7 sidecarless service mesh |
+| **GitOps System**| K-Gateway | `v2.4.2` | `v2.4.2` | Envoy 1.38 Gateway API implementation |
 | **GitOps System**| oauth2-proxy | `7.15.3` | `10.7.0` | Ingress authentication proxy handler |
-| **GitOps System**| VictoriaMetrics | `v1.146.0` | `0.85.10` | Grafana (`13.0.*`) and monitoring |
-| **GitOps System**| VictoriaLogs | `v1.51.0` | `0.2.7` | VictoriaMetrics logging subsystem |
+| **GitOps System**| VictoriaMetrics | `v1.150.0` | `0.91.0` | Grafana (`13.0.*`) and monitoring stack |
+| **GitOps System**| VictoriaLogs | `v1.52.0` | `0.2.8` | VictoriaMetrics logging subsystem |
 | **GitOps System**| GPU Operator | `v26.3.3` | `v26.3.3` | NVIDIA GPU driver & runtime provisioning |
-| **GitOps System**| NVIDIA DRA Driver | `0.4.1` | `0.4.1` | DRA-based dynamic GPU mapping |
+| **GitOps System**| NVIDIA DRA Driver | `0.5.0` | `0.5.0` | DRA-based dynamic GPU mapping |
 | **GitOps System**| kube-state-metrics | `2.19.1` | `7.5.1` | Kubernetes resource metrics exporter |
-| **GitOps System**| Kyverno | `v1.18.1` | `3.8.1` | Kubernetes policy engine |
-| **GitOps System**| Argo Workflows | `v4.0.6` | `1.0.18` | Batch workflow engine |
-| **GitOps System**| MLflow | `3.13.0` | `1.11.2` | ML model registry (Image tag overridden in manifest) |
+| **GitOps System**| Kyverno | `v1.19.0` | `3.9.0` | Kubernetes policy engine |
+| **GitOps System**| Argo Workflows | `v4.1.1` | `2.0.1` | Batch workflow engine |
+| **GitOps System**| MLflow | `3.15.1` | `1.11.4` | ML model registry (Image tag overridden in manifest) |
 | **Inference App** | Qwen Serving    | `Qwen/Qwen3.5-9B`      | - | Running Qwen 3.5 9B FP8 via vLLM and vLLM Router |
 | **Inference App** | Gemma Serving   | `google/gemma-4-e4b-it`| - | (Inactive / Disabled via ApplicationSet exclusion) |
 | **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | TTS via SGLang-Omni (`dev`) |

@@ -125,13 +125,13 @@ for key in "${keys[@]}"; do
     remote_app="v2.4.2"
   elif [ "$key" = "nvidia-dra-driver" ]; then
     # OCI-based NVIDIA DRA Driver static target update
-    remote_chart="0.4.1"
-    remote_app="0.4.1"
+    remote_chart="0.5.0"
+    remote_app="0.5.0"
   elif [ "$key" = "gateway-api" ]; then
     # Fetch latest Gateway API release version from GitHub
     remote_chart=$(curl -s "https://api.github.com/repos/kubernetes-sigs/gateway-api/releases/latest" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     if [ -z "$remote_chart" ] || [[ ! "$remote_chart" =~ ^v[0-9] ]]; then
-      remote_chart="v1.5.1" # fallback if rate limited or offline
+      remote_chart="v1.6.1" # fallback if rate limited or offline
     fi
     remote_app="$remote_chart"
   elif [ "$key" = "metrics-server" ]; then
