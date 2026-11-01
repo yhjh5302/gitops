@@ -192,7 +192,14 @@ helm upgrade --install argocd argo/argo-cd \
   --set server.service.type=ClusterIP \
   --set configs.params."server\.insecure"=true \
   --set dex.enabled=false \
+  --force-conflicts \
   --wait --timeout 5m
+
+# ConfigMap 및 Istio 라우팅 등 시스템 매니페스트 즉시 동기화
+if [ -d "${REPO_ROOT}/gitops/01-system/main/argocd/manifests" ]; then
+  echo " -> Argo CD 운영 ConfigMap 및 라우팅 매니페스트 동기화 중..."
+  kubectl apply -f "${REPO_ROOT}/gitops/01-system/main/argocd/manifests/"
+fi
 
 # C. Webhook 검증용 ExternalSecret 배포 (argocd-secret에 머지)
 echo " -> Vault 연동을 위한 Webhook ExternalSecret 배포 중..."
