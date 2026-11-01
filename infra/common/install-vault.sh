@@ -3,6 +3,9 @@
 # eBPF 기반 또는 로컬 호스트용 HashiCorp Vault 설치 스크립트
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+KEY_FILE="${SCRIPT_DIR}/vault-keys.json"
+
 GREEN='\033[0;32m'
 BLUE='\033[0;36m'
 RED='\033[0;31m'
@@ -59,6 +62,14 @@ disable_mlock = true
 EOF
 )
 
+# 사전에 저장된 키가 있는 경우 vault-unseal-key Secret 사전 생성 (postStart 훅 연동용)
+if [ -f "${KEY_FILE}" ]; then
+  PRE_UNSEAL_KEY=$(jq -r '.unseal_keys_b64[0]' "${KEY_FILE}" 2>/dev/null || echo "")
+  if [ -n "${PRE_UNSEAL_KEY}" ]; then
+    kubectl create secret generic vault-unseal-key -n vault --from-literal=key="${PRE_UNSEAL_KEY}" --dry-run=client -o yaml | kubectl apply -f - &>/dev/null || true
+  fi
+fi
+
 EXTRA_VAULT_ARGS=(
   "--set" "server.ha.replicas=1"
   "--set" "server.ha.raft.config=${VAULT_RAFT_CONFIG}"
@@ -114,9 +125,14 @@ INIT_STATUS=$(echo "${VAULT_STATUS}" | jq -r '.initialized' 2>/dev/null || echo 
 if [ "${INIT_STATUS}" != "True" ] && [ "${INIT_STATUS}" != "true" ]; then
   echo " -> Vault 초기화가 되어있지 않습니다. 초기화를 수행합니다..."
   # 로컬 개발/검증을 위해 1개의 키 마스터 쉐어로 간소화 초기화
-  kubectl exec -n vault vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > "${KEY_FILE}"
-  chmod 600 "${KEY_FILE}"
-  echo " -> [성공] Vault 초기화 완료. 마스터 키와 토큰이 ${KEY_FILE}에 저장되었습니다."
+  INIT_OUTPUT=$(kubectl exec -n vault vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json 2>/dev/null || true)
+  if [ -n "${INIT_OUTPUT}" ] && echo "${INIT_OUTPUT}" | jq -e '.unseal_keys_b64' &>/dev/null; then
+    echo "${INIT_OUTPUT}" > "${KEY_FILE}"
+    chmod 600 "${KEY_FILE}"
+    echo " -> [성공] Vault 초기화 완료. 마스터 키와 토큰이 ${KEY_FILE}에 저장되었습니다."
+    POST_UNSEAL_KEY=$(echo "${INIT_OUTPUT}" | jq -r '.unseal_keys_b64[0]' 2>/dev/null || echo "")
+    kubectl create secret generic vault-unseal-key -n vault --from-literal=key="${POST_UNSEAL_KEY}" --dry-run=client -o yaml | kubectl apply -f - &>/dev/null || true
+  fi
 fi
 
 # vault-keys.json 파일에서 마스터 키 및 루트 토큰 추출
