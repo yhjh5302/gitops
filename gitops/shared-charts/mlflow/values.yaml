@@ -119,7 +119,7 @@ telemetry:
 # -- Mlflow database connection settings
 backendStore:
   # -- Specifies if you want to run database migration
-  databaseMigration: false
+  databaseMigration: true
   # -- Add an additional init container, which checks for database availability
   databaseConnectionCheck: false
   # -- Specifies the default sqlite path

@@ -42,65 +42,50 @@ spec:
       - operation:
           ports: ["8200"]
 ---
-apiVersion: batch/v1
-kind: CronJob
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: vault-auto-unsealer
   namespace: vault
 spec:
-  schedule: "*/15 * * * *" # 15분마다 실행
-  concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 3
-  jobTemplate:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-auto-unsealer
+  template:
+    metadata:
+      labels:
+        app: vault-auto-unsealer
     spec:
-      template:
-        metadata:
-          labels:
-            app: vault-auto-unsealer
-        spec:
-          serviceAccountName: vault-auto-unsealer
-          containers:
-          - name: unsealer
-            image: curlimages/curl:latest
-            env:
-            - name: UNSEAL_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: vault-unseal-key
-                  key: key
-            command:
-            - /bin/sh
-            - -c
-            - |
-              VAULT_ADDR="http://vault-0.vault-internal:8200"
-              
-              echo "Checking Vault seal status at $VAULT_ADDR..."
-              STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" $VAULT_ADDR/v1/sys/seal-status)
-              
-              if [ "$STATUS_CODE" -ne 200 ] && [ "$STATUS_CODE" -ne 429 ]; then
-                echo "Error: Vault API returned HTTP $STATUS_CODE. Vault might be offline."
-                exit 1
-              fi
-              
-              SEAL_STATUS=$(curl -s $VAULT_ADDR/v1/sys/seal-status)
-              SEALED=$(echo "$SEAL_STATUS" | grep -o '"sealed":true')
-              
-              if [ ! -z "$SEALED" ]; then
-                echo "Vault is sealed. Attempting to unseal..."
-                UNSEAL_RESPONSE=$(curl -s -X PUT -d "{\"key\":\"$UNSEAL_KEY\"}" $VAULT_ADDR/v1/sys/unseal)
-                echo "Response: $UNSEAL_RESPONSE"
-                
-                # Check status again to verify unseal was successful
-                NEW_STATUS=$(curl -s $VAULT_ADDR/v1/sys/seal-status)
-                IS_SEALED=$(echo "$NEW_STATUS" | grep -o '"sealed":true')
-                if [ -z "$IS_SEALED" ]; then
-                  echo "Successfully unsealed Vault!"
-                else
-                  echo "Failed to unseal Vault."
-                  exit 1
-                fi
-              else
-                echo "Vault is already unsealed."
-              fi
-          restartPolicy: OnFailure
+      serviceAccountName: vault-auto-unsealer
+      containers:
+      - name: unsealer
+        image: curlimages/curl:latest
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+        env:
+        - name: UNSEAL_KEY
+          valueFrom:
+            secretKeyRef:
+              name: vault-unseal-key
+              key: key
+        command:
+        - /bin/sh
+        - -c
+        - |
+          VAULT_ADDR="http://vault-0.vault-internal:8200"
+          echo "Starting continuous Vault auto-unseal daemon..."
+          while true; do
+            SEAL_STATUS=$(curl -s --connect-timeout 2 --max-time 3 $VAULT_ADDR/v1/sys/seal-status 2>/dev/null || true)
+            if echo "$SEAL_STATUS" | grep -q '"sealed":true'; then
+              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Vault is sealed! Unsealing now..."
+              UNSEAL_RESPONSE=$(curl -s --connect-timeout 2 --max-time 5 -X PUT -d "{\"key\":\"$UNSEAL_KEY\"}" $VAULT_ADDR/v1/sys/unseal 2>/dev/null || true)
+              echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Unseal response: $UNSEAL_RESPONSE"
+            fi
+            sleep 5
+          done
