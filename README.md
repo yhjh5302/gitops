@@ -128,7 +128,7 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 | **GitOps System**| MLflow | `3.16.0` | `1.11.7` | ML model registry (Image tag overridden in manifest) |
 | **Inference App** | Qwen Serving    | `Qwen/Qwen3.5-9B`      | - | Running Qwen 3.5 9B FP8 via vLLM (v0.32.0) and vLLM Router |
 | **Inference App** | Gemma Serving   | `google/gemma-4-e4b-it`| - | (Inactive / Disabled via ApplicationSet exclusion) |
-| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | TTS via SGLang-Omni (`v0.2.0`) |
+| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | TTS via SGLang-Omni (`0.1.1`) |
 | **Inference App** | Whisper Serving | `fedirz/faster-whisper-server:latest-cpu` | - | STT via faster-whisper-server |
 
 ---
@@ -161,7 +161,8 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 │   │   ├── prepare-node.sh             # Host kernel/OS tuning script
 │   │   ├── reset-cluster.sh            # Tear down and clean node configuration script
 │   │   ├── setup-cluster.sh            # Interactive cluster setup orchestrator script
-│   │   └── setup-hosts.sh              # Multi-node host map installer
+│   │   ├── setup-hosts.sh              # Multi-node host map installer
+│   │   └── upgrade-cluster.sh          # Node-by-node automated Kubernetes version upgrade script
 │   └── kubespray/                      # Placeholder for future Kubespray integration (Planned)
 ├── gitops/                             # Phase 2: GitOps continuous delivery source manifests
 │   ├── bootstrap/                      # Bootstrapping credentials and CRD loaders

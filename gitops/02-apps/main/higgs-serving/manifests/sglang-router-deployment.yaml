@@ -34,9 +34,8 @@ spec:
           args:
             - |
               mkdir -p /workspace
-              if [ ! -d "/workspace/sglang-omni" ]; then
-                git clone --depth 1 --branch v0.2.0 https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
-              fi
+              rm -rf /workspace/sglang-omni
+              git clone --depth 1 --branch 0.1.1 https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
               pip3 install websockets --break-system-packages || pip3 install websockets
               PYTHONPATH=/workspace/sglang-omni python3 -m sglang_omni_router.serve \
                 --host 0.0.0.0 \

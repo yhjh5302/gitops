@@ -22,6 +22,7 @@ spec:
         extraEnvVars:
           MLFLOW_SERVER_ALLOWED_HOSTS: "*"
         backendStore:
+          databaseMigration: true
           postgres:
             enabled: true
             host: "postgres.postgres.svc"
