@@ -7,17 +7,17 @@ networking:
   kubeProxyMode: "none" # for cilium
 nodes:
 - role: control-plane
-  image: kindest/node:v1.35.6
+  image: kindest/node:v1.37.0
   # extraMounts:
   # - hostPath: /Users/uplus/Downloads/LGUPLUS_CERT.crt
   #   containerPath: /etc/ssl/certs/LGUPLUS_CERT.pem
 - role: worker
-  image: kindest/node:v1.35.6
+  image: kindest/node:v1.37.0
   # extraMounts:
   # - hostPath: /Users/uplus/Downloads/LGUPLUS_CERT.crt
   #   containerPath: /etc/ssl/certs/LGUPLUS_CERT.pem
 - role: worker
-  image: kindest/node:v1.35.6
+  image: kindest/node:v1.37.0
   # extraMounts:
   # - hostPath: /Users/uplus/Downloads/LGUPLUS_CERT.crt
   #   containerPath: /etc/ssl/certs/LGUPLUS_CERT.pem

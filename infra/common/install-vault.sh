@@ -82,6 +82,16 @@ helm upgrade --install vault hashicorp/vault \
   "${EXTRA_VAULT_ARGS[@]}"
 
 echo -e "\n${GREEN}3단계: Vault Pod 기동 및 초기화/Unseal 자동화${NC}"
+
+# OnDelete 전략으로 인해 파드가 이전 이미지로 남아있는 경우 새 이미지 반영을 위해 파드 롤링 재시작
+CURRENT_POD_IMG=$(kubectl get pod vault-0 -n vault -o jsonpath='{.spec.containers[0].image}' 2>/dev/null || echo "")
+TARGET_IMG=$(kubectl get statefulset vault -n vault -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "")
+
+if [ -n "${CURRENT_POD_IMG}" ] && [ -n "${TARGET_IMG}" ] && [ "${CURRENT_POD_IMG}" != "${TARGET_IMG}" ]; then
+  echo " -> Vault 이미지 업데이트 감지 (${CURRENT_POD_IMG} -> ${TARGET_IMG}). vault-0 Pod를 재시작합니다..."
+  kubectl delete pod vault-0 -n vault --wait=true
+fi
+
 echo " -> Vault Pod(vault-0)가 API 서버에 등록될 때까지 대기합니다..."
 for i in {1..30}; do
   if kubectl get pod -n vault vault-0 --request-timeout='1s' &>/dev/null; then
@@ -160,6 +170,24 @@ if [ -f "${CONFIG_FILE}" ]; then
   kubectl exec -n vault vault-0 -- vault kv put secret/argocd client-secret="${ARGOCD_CLIENT_SECRET:-argocd_client_secret_placeholder}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/grafana client-secret="${GRAFANA_CLIENT_SECRET:-grafana_client_secret_placeholder}" admin-password="${GRAFANA_ADMIN_PASSWORD:-}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/private-assistant huggingface-token="${HF_TOKEN:-huggingface_token_placeholder}" db-user="${PRIVATE_ASSISTANT_DB_USERNAME:-private_assistant}" database-password="${PRIVATE_ASSISTANT_DB_PASSWORD:-}" &>/dev/null
+
+  # Victoria Metrics용 Prometheus 메트릭 수집 정책 및 토큰 구성
+  echo " -> Victoria Metrics용 Prometheus 메트릭 수집 정책 및 토큰 구성 중..."
+  kubectl exec -i -n vault vault-0 -- vault policy write prometheus-metrics - <<'EOF' &>/dev/null
+path "sys/metrics" {
+  capabilities = ["read", "list"]
+}
+EOF
+  # 기존 토큰 유무 확인 후 없을 때만 장기(orphan) 토큰 발급 및 적재
+  if ! kubectl exec -n vault vault-0 -- vault kv get -field=token secret/victoria-metrics/vault-token &>/dev/null; then
+    METRICS_TOKEN=$(kubectl exec -n vault vault-0 -- vault token create -policy=prometheus-metrics -period=87600h -orphan -field=token 2>/dev/null || echo "")
+    if [ -n "${METRICS_TOKEN}" ]; then
+      kubectl exec -n vault vault-0 -- vault kv put secret/victoria-metrics/vault-token token="${METRICS_TOKEN}" &>/dev/null
+      echo " -> ✓ Victoria Metrics 메트릭 수집용 Vault 토큰 적재 완료."
+    fi
+  else
+    echo " -> ✓ Victoria Metrics용 메트릭 수집 토큰이 이미 존재합니다."
+  fi
 
   echo " -> ✓ 자격증명, 웹훅 및 데이터베이스 시크릿이 Vault에 안전하게 적재되었습니다."
 else

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Kubernetes Kubeadm Cluster Setup Configurations
 
-# Kubernetes Version Series (e.g. v1.35.6)
-export KUBERNETES_VERSION="v1.36.3"
+# Kubernetes Version Series (e.g. v1.37.2)
+export KUBERNETES_VERSION="${KUBERNETES_VERSION:-v1.37.2}"
 
 # Kubeadm Init Options
 export POD_NETWORK_CIDR="10.233.0.0/16"

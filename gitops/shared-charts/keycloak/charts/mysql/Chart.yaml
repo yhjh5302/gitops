@@ -1,8 +1,8 @@
 annotations:
   artifacthub.io/category: database
   artifacthub.io/changes: |
-    - kind: changed
-      description: "bump mysql lts to 9.7.2 (#975)"
+    - kind: fixed
+      description: "add global section to all value.schema.json files (#1227)"
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Official Website
@@ -27,7 +27,7 @@ annotations:
   helmforge.dev/repository: https://repo.helmforge.dev
   helmforge.dev/signed: gpg+cosign
 apiVersion: v2
-appVersion: 9.7.2
+appVersion: 26.7.0
 description: MySQL for Kubernetes with explicit standalone and replication modes
 home: https://helmforge.dev
 icon: https://helmforge.dev/icons/charts/mysql.png
@@ -44,4 +44,4 @@ sources:
 - https://github.com/helmforgedev/charts
 - https://hub.docker.com/_/mysql
 type: application
-version: 2.0.3
+version: 2.1.1

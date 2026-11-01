@@ -1,3 +1,20 @@
+{{- /*
+vm.versions.resolve resolves an image tag: an explicit .tag wins, otherwise falls back to
+global.versions[.key] (e.g. "logs", "traces", "alertmanager"), otherwise empty.
+*/ -}}
+{{- define "vm.versions.resolve" -}}
+  {{- $Values := (.helm).Values | default .Values -}}
+  {{- .tag | default (index (($Values.global).versions | default dict) .key) | default "" -}}
+{{- end -}}
+
+{{- /*
+vm.version.label strips an `@sha256:...` digest from an image tag, so it's safe to use as the
+`app.kubernetes.io/version` label; a label value can't contain `@` or exceed 63 characters.
+*/ -}}
+{{- define "vm.version.label" -}}
+  {{- regexReplaceAll "(.*)(@sha.*)" . "${1}" -}}
+{{- end -}}
+
 {{- define "vm.read.endpoint" -}}
   {{- $Values := (.helm).Values | default .Values -}}
   {{- $endpoint := dict -}}
@@ -113,6 +130,7 @@
     {{- $notifiers := list -}}
     {{- $appSecure := not (empty ((($Values.alertmanager).spec).webConfig).tls_server_config) -}}
     {{- $_ := set $ctx "appKey" (list "alertmanager" "spec") -}}
+    {{- $_ := set $ctx "kindOverride" "vmalertmanager" -}}
     {{- $_ := set $ctx "appSecure" $appSecure -}}
     {{- $_ := set $ctx "appRoute" (($Values.alertmanager).spec).routePrefix -}}
     {{- $alertManagerReplicas := $Values.alertmanager.spec.replicaCount | default 1 | int -}}
@@ -271,6 +289,34 @@
   {{- $_ := set . "vt" $vt -}}
 {{- end -}}
 
+{{- /* Default targetRefs for unauthorizedUserAccessSpec */ -}}
+{{- define "vm.auth.targetRefs" -}}
+  {{- $Values := (.helm).Values | default .Values -}}
+  {{- $refs := list -}}
+  {{- if $Values.vmsingle.enabled -}}
+    {{- $ctx := dict "helm" .helm "appKey" (list "vmsingle" "spec") -}}
+    {{- $refs = append $refs (dict "crd" (dict "kind" "VMSingle" "name" (include "vm.cr.fullname" $ctx) "namespace" (include "vm.namespace" $ctx))) -}}
+  {{- else -}}
+    {{- if and $Values.vmcluster.enabled $Values.vmcluster.spec.vmselect.enabled -}}
+      {{- $ctx := dict "helm" .helm "appKey" (list "vmcluster" "spec") -}}
+      {{- $refs = append $refs (dict "crd" (dict "kind" "VMCluster/vmselect" "name" (include "vm.cr.fullname" $ctx) "namespace" (include "vm.namespace" $ctx))) -}}
+    {{- else -}}
+      {{- with .vm.read -}}
+        {{- $refs = append $refs (dict "static" (dict "url" (printf "%s/" (urlJoin (omit . "path")))) "paths" (list (printf "%s/.*" .path))) -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if and $Values.vmcluster.enabled $Values.vmcluster.spec.vminsert.enabled -}}
+      {{- $ctx := dict "helm" .helm "appKey" (list "vmcluster" "spec") -}}
+      {{- $refs = append $refs (dict "crd" (dict "kind" "VMCluster/vminsert" "name" (include "vm.cr.fullname" $ctx) "namespace" (include "vm.namespace" $ctx))) -}}
+    {{- else -}}
+      {{- with .vm.write -}}
+        {{- $refs = append $refs (dict "static" (dict "url" (printf "%s/" (urlJoin (omit . "path")))) "paths" (list (printf "%s/.*" .path))) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- toYaml $refs -}}
+{{- end -}}
+
 {{- /* VMAuth spec */ -}}
 {{- define "vm.auth.spec" -}}
   {{- $Values := (.helm).Values | default .Values }}
@@ -282,6 +328,12 @@
       {{- $_ := unset $spec "unauthorizedUserAccessSpec" }}
     {{- else -}}
       {{- $_ := unset $spec.unauthorizedUserAccessSpec "disabled" }}
+      {{- if not (or $spec.unauthorizedUserAccessSpec.url_map $spec.unauthorizedUserAccessSpec.url_prefix $spec.unauthorizedUserAccessSpec.targetRefs) -}}
+        {{- $targetRefs := fromYamlArray (include "vm.auth.targetRefs" .) -}}
+        {{- if $targetRefs -}}
+          {{- $_ := set $spec.unauthorizedUserAccessSpec "targetRefs" $targetRefs -}}
+        {{- end -}}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
   {{- $_ := set $spec "image" (mergeOverwrite (deepCopy $image) (deepCopy ($spec.image | default dict))) -}}
@@ -318,6 +370,10 @@
     {{- end -}}
   {{- end }}
   {{- $_ := set $spec "templates" $templates -}}
+  {{- $version := include "vm.versions.resolve" (dict "helm" .helm "tag" (($spec.image).tag) "key" "alertmanager") -}}
+  {{- with $version -}}
+    {{- $_ := set $spec "image" (mergeOverwrite ($spec.image | default dict) (dict "tag" .)) -}}
+  {{- end -}}
   {{- toYaml $spec -}}
 {{- end -}}
 
@@ -415,7 +471,7 @@
     {{- $installed = append $installed $plugin }}
   {{- end -}}
   {{- $ds := .ds -}}
-  {{- toString (or (not (hasKey $ds "version")) (has $ds.type $installed)) -}}
+  {{- toString (or (not $ds.plugin) (has $ds.type $installed)) -}}
 {{- end -}}
 
 {{- /* Datasources */ -}}
@@ -457,6 +513,8 @@
     {{- range $ds := $Values.defaultDatasources.alertmanager.datasources }}
       {{- $appSecure := not (empty ((($Values.alertmanager).spec).webConfig).tls_server_config) -}}
       {{- $_ := set $ctx "appKey" (list "alertmanager" "spec") -}}
+      {{- $_ := set $ctx "kindOverride" "vmalertmanager" -}}
+      {{- $_ := set $ctx "style" "managed" -}}
       {{- $_ := set $ctx "appSecure" $appSecure -}}
       {{- $_ := set $ctx "appRoute" (($Values.alertmanager).spec).routePrefix -}}
       {{- $_ := set $ds "url" (include "vm.url" $ctx) -}}
@@ -489,6 +547,10 @@
     {{- $grafanaAddr = printf "%s://%s" $grafanaScheme (index $grafanaHosts 0) -}}
   {{- end -}}
   {{- $grafanaAddr -}}
+{{- end -}}
+
+{{- define "vm-k8s-stack.alertmanager.namespace" -}}
+  {{- include "vm.namespace" (dict "helm" . "appKey" (list "alertmanager" "spec")) -}}
 {{- end -}}
 
 {{- define "vl.read.endpoint" -}}
@@ -555,23 +617,36 @@
   {{- with (include "vm.license.global" .) -}}
     {{- $_ := set $spec "license" (fromYaml .) -}}
   {{- end -}}
-  {{- tpl (mergeOverwrite (deepCopy $agentValues.spec) (deepCopy $spec) | toYaml) . -}}
+  {{- $mergedSpec := mergeOverwrite (deepCopy $agentValues.spec) (deepCopy $spec) -}}
+  {{- if not (($mergedSpec.image).tag) -}}
+    {{- $version := include "vm.versions.resolve" (dict "helm" .helm "key" "logs") -}}
+    {{- with $version -}}
+      {{- $_ := set $mergedSpec "image" (mergeOverwrite ($mergedSpec.image | default dict) (dict "tag" .)) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $mergedSpec | toYaml -}}
 {{- end }}
 
 {{- /* VLSingle spec */ -}}
 {{- define "vl.single.spec" -}}
   {{- $Values := (.helm).Values | default .Values }}
-  {{- $image := dict "tag" (include "vm.image.tag" .) }}
   {{- $extraArgs := dict -}}
   {{- if $Values.vmalert.enabled }}
     {{- $_ := set . "appKey" (list "vmalert" "spec") }}
     {{- $_ := set $extraArgs "vmalert.proxyURL" (include "vm.url" .) -}}
   {{- end -}}
-  {{- $spec := dict "extraArgs" $extraArgs "image" $image -}}
+  {{- $spec := dict "extraArgs" $extraArgs -}}
   {{- with (include "vm.license.global" .) -}}
     {{- $_ := set $spec "license" (fromYaml .) -}}
   {{- end -}}
-  {{- tpl (deepCopy $Values.vlsingle.spec | mergeOverwrite $spec | toYaml) . -}}
+  {{- $mergedSpec := deepCopy $Values.vlsingle.spec | mergeOverwrite $spec -}}
+  {{- if not (($mergedSpec.image).tag) -}}
+    {{- $version := include "vm.versions.resolve" (dict "helm" .helm "key" "logs") -}}
+    {{- with $version -}}
+      {{- $_ := set $mergedSpec "image" (mergeOverwrite ($mergedSpec.image | default dict) (dict "tag" .)) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $mergedSpec | toYaml -}}
 {{- end }}
 
 {{- /* VLCluster select spec */ -}}
@@ -670,12 +745,18 @@
 {{- /* VTSingle spec */ -}}
 {{- define "vt.single.spec" -}}
   {{- $Values := (.helm).Values | default .Values }}
-  {{- $image := dict "tag" (include "vm.image.tag" .) }}
-  {{- $spec := dict "image" $image -}}
+  {{- $spec := dict -}}
   {{- with (include "vm.license.global" .) -}}
     {{- $_ := set $spec "license" (fromYaml .) -}}
   {{- end -}}
-  {{- tpl (deepCopy $Values.vtsingle.spec | mergeOverwrite $spec | toYaml) . -}}
+  {{- $mergedSpec := deepCopy $Values.vtsingle.spec | mergeOverwrite $spec -}}
+  {{- if not (($mergedSpec.image).tag) -}}
+    {{- $version := include "vm.versions.resolve" (dict "helm" .helm "key" "traces") -}}
+    {{- with $version -}}
+      {{- $_ := set $mergedSpec "image" (mergeOverwrite ($mergedSpec.image | default dict) (dict "tag" .)) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $mergedSpec | toYaml -}}
 {{- end }}
 
 {{- /* VTCluster spec */ -}}
@@ -703,9 +784,49 @@
   {{- tpl (toYaml $clusterSpec) . -}}
 {{- end -}}
 
+{{- /* targetRefs for internal VMAuth: /select/logsql/.* routes to VL, everything else to VM */ -}}
+{{- define "vm.auth.internal.targetRefs" -}}
+  {{- $Values := (.helm).Values | default .Values -}}
+  {{- $refs := list -}}
+  {{- if $Values.vlsingle.enabled -}}
+    {{- $ctx := dict "helm" .helm "appKey" (list "vlsingle" "spec") -}}
+    {{- $refs = append $refs (dict "crd" (dict "kind" "VLSingle" "name" (include "vm.cr.fullname" $ctx) "namespace" (include "vm.namespace" $ctx)) "paths" (list "/select/logsql/.*")) -}}
+  {{- else if and $Values.vlcluster.enabled $Values.vlcluster.spec.vlselect.enabled -}}
+    {{- $ctx := dict "helm" .helm "appKey" (list "vlcluster" "spec") -}}
+    {{- $refs = append $refs (dict "crd" (dict "kind" "VLCluster/vlselect" "name" (include "vm.cr.fullname" $ctx) "namespace" (include "vm.namespace" $ctx)) "paths" (list "/select/logsql/.*")) -}}
+  {{- else -}}
+    {{- with .vl.read -}}
+      {{- $refs = append $refs (dict "static" (dict "url" (printf "%s/" (urlJoin (omit . "path")))) "paths" (list "/select/logsql/.*")) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $Values.vmsingle.enabled -}}
+    {{- $ctx := dict "helm" .helm "appKey" (list "vmsingle" "spec") -}}
+    {{- $refs = append $refs (dict "crd" (dict "kind" "VMSingle" "name" (include "vm.cr.fullname" $ctx) "namespace" (include "vm.namespace" $ctx)) "paths" (list "/.*")) -}}
+  {{- else if and $Values.vmcluster.enabled $Values.vmcluster.spec.vmselect.enabled -}}
+    {{- $ctx := dict "helm" .helm "appKey" (list "vmcluster" "spec") -}}
+    {{- $tenant := $Values.tenant | default 0 -}}
+    {{- $refs = append $refs (dict "crd" (dict "kind" "VMCluster/vmselect" "name" (include "vm.cr.fullname" $ctx) "namespace" (include "vm.namespace" $ctx)) "target_path_suffix" (printf "/select/%d/prometheus" (int $tenant)) "paths" (list "/.*")) -}}
+  {{- else -}}
+    {{- $vmRead := fromYaml (include "vm.prometheus.read" .) -}}
+    {{- with $vmRead.url -}}
+      {{- $refs = append $refs (dict "static" (dict "url" (printf "%s/" .)) "paths" (list "/.*")) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- toYaml $refs -}}
+{{- end -}}
+
 {{- /* VMAuth spec for routing vmalert: /select/logsql/.* → VL, everything else → VM */ -}}
 {{- define "vm.auth.internal.spec" -}}
   {{- $Values := (.helm).Values | default .Values -}}
   {{- include "vm.auth.context" . -}}
-  {{- tpl (deepCopy $Values.internal.vmauth.spec | toYaml) . -}}
+  {{- $spec := deepCopy $Values.internal.vmauth.spec -}}
+  {{- $uaSpec := $spec.unauthorizedUserAccessSpec | default dict -}}
+  {{- if not (or $uaSpec.url_map $uaSpec.url_prefix $uaSpec.targetRefs) -}}
+    {{- $targetRefs := fromYamlArray (include "vm.auth.internal.targetRefs" .) -}}
+    {{- if $targetRefs -}}
+      {{- $_ := set $uaSpec "targetRefs" $targetRefs -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $_ := set $spec "unauthorizedUserAccessSpec" $uaSpec -}}
+  {{- tpl (toYaml $spec) . -}}
 {{- end -}}

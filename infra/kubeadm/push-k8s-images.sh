@@ -11,7 +11,7 @@ if [ -f "${SCRIPT_DIR}/config.sh" ]; then
 fi
 
 # config.sh 환경변수 로드
-K8S_VER="${KUBERNETES_VERSION:-v1.35}"
+K8S_VER="${KUBERNETES_VERSION:-v1.37.2}"
 REGISTRY="${IMAGE_REPOSITORY:-registry.k8s.io}"
 SANDBOX_IMG="${SANDBOX_IMAGE:-registry.k8s.io/pause:3.10.2}"
 

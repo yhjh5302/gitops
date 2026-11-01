@@ -86,13 +86,16 @@ Recommended reading before installation:
 - [Kubernetes Gateway API](https://kubernetes.io/docs/concepts/services-networking/gateway/)
 - [External Secrets Operator](https://external-secrets.io/latest/)
 
-## Keycloak 26.7.x alignment
+## Keycloak 26.8.x alignment
 
-This chart tracks the official Keycloak server image `quay.io/keycloak/keycloak:26.7.1`.
+This chart tracks the official Keycloak server image `quay.io/keycloak/keycloak:26.8.1`.
 
-Relevant 26.7.x operational changes to account for during rollout:
+Relevant 26.8.x operational changes to account for during rollout:
 
-- 26.7.1 includes security and authentication fixes; review the upstream migration guide before production rollout
+- 26.8.1 supersedes 26.8.0 and includes security fixes; review the upstream migration guide before production rollout
+- multi-cluster v1 (`multi-site`) is deprecated in favor of the `stateless` feature used by multi-cluster v2
+- Kubernetes pods expose their pod name as `KC_CACHE_EMBEDDED_NODE_NAME` for stable cache-node observability
+- large-table indexes skipped during schema migration can now be created automatically in the background on supported databases
 - zero-downtime patch releases are supported within the same minor stream, but still require readiness, proxy, and database validation
 - the HTTP stack supports graceful shutdown, so keep `terminationGracePeriodSeconds` aligned with connection draining at the proxy layer
 - Kubernetes and OpenShift truststore initialization improved upstream; keep custom `truststore` and database CA mounts explicit when the platform uses private CAs
@@ -110,7 +113,7 @@ This chart exposes common Keycloak production options as first-class values:
 - `features.enabled` and `features.disabled` map to `KC_FEATURES` and `KC_FEATURES_DISABLED`
 - `optimized.enabled` adds `--optimized` for custom pre-built production images
 - `metrics.userEvents`, `metrics.cacheHistograms`, `telemetry.*`, `tracing.*`, and `logging.*` map to Keycloak observability settings
-- `deployment.strategy.*` controls Kubernetes rollout behavior
+- `deployment.progressDeadlineSeconds` and `deployment.strategy.*` control Kubernetes rollout behavior
 - `serviceAccount.automountServiceAccountToken` controls whether Kubernetes mounts the service account token and cluster CA files
 - `truststore.kubernetes.enabled` maps to `KC_TRUSTSTORE_KUBERNETES_ENABLED`
 - `capacity.profile` can render conservative `small`, `medium`, or `large` resource presets when `resources` is not set
@@ -189,6 +192,8 @@ postgresql:
 
 - use `mode: production` for all real environments
 - prefer `admin.existingSecret` and `database.external.existingSecret`
+- the built-in database wait init container inherits `securityContext` and is
+  non-root with dropped capabilities by default
 - keep the management service internal
 - restrict admin exposure at the reverse proxy layer when using a dedicated admin hostname
 - use [Security and Trust](docs/security-and-trust.md) when database TLS or custom internal CAs are involved
@@ -245,12 +250,13 @@ postgresql:
 |-----------|-------------|---------|
 | `mode` | `dev` or `production` | `dev` |
 | `image.repository` | Keycloak image repository | `quay.io/keycloak/keycloak` |
-| `image.tag` | Keycloak image tag | `26.7.1` |
+| `image.tag` | Keycloak image tag | `26.8.1` |
 | `admin.existingSecret` | Existing secret for bootstrap admin credentials | `""` |
 | `http.port` | Application HTTP port | `8080` |
 | `http.managementPort` | Management port for health and metrics | `9000` |
 | `http.relativePath` | Relative HTTP path | `/` |
 | `management.relativePath` | Optional management relative path | `""` |
+| `deployment.progressDeadlineSeconds` | Deployment progress deadline for startup and migrations | `600` |
 | `deployment.strategy.type` | Deployment strategy | `RollingUpdate` |
 | `deployment.strategy.rollingUpdate.maxUnavailable` | Max unavailable pods during rollout | `0` |
 | `deployment.strategy.rollingUpdate.maxSurge` | Max surge pods during rollout | `1` |
@@ -259,6 +265,7 @@ postgresql:
 | `proxy.headers` | Proxy headers mode | `xforwarded` |
 | `proxy.trustedAddresses` | Trusted proxy IPs/CIDRs | `""` |
 | `proxy.protocolEnabled` | Enable HAProxy PROXY protocol | `false` |
+| `database.mysqlSchemaInitialized` | Confirm the schema exists before running multiple replicas with bundled or external MySQL | `false` |
 | `database.external.vendor` | External database vendor | `postgres` |
 | `database.external.host` | External database host | `""` |
 | `database.external.name` | External database name | `keycloak` |
@@ -281,10 +288,12 @@ postgresql:
 | `postgresql.auth.database` | Subchart database name | `keycloak` |
 | `postgresql.auth.username` | Subchart database username | `keycloak` |
 | `postgresql.auth.password` | Subchart database password | `""` |
-| `mysql.enabled` | Enable MySQL subchart | `false` |
+| `postgresql.initdb.scripts` | First-boot scripts that prepare Liquibase bookkeeping tables in the default `public` schema | built-in |
+| `mysql.enabled` | Enable MySQL subchart; use the explicit staged-bootstrap confirmation before scaling out | `false` |
 | `mysql.auth.database` | Subchart database name | `keycloak` |
 | `mysql.auth.username` | Subchart database username | `keycloak` |
 | `mysql.auth.password` | Subchart database password | `""` |
+| `mysql.initdb.scripts` | First-boot scripts that prepare Liquibase bookkeeping tables before the required staged bootstrap | built-in |
 | `truststore.enabled` | Enable additional truststore paths | `false` |
 | `truststore.existingSecret` | Secret with PEM or PKCS12 trust material | `""` |
 | `truststore.existingConfigMap` | ConfigMap with PEM or PKCS12 trust material | `""` |
@@ -292,6 +301,7 @@ postgresql:
 | `truststore.kubernetes.enabled` | Trust Kubernetes/OpenShift service account CAs when mounted | `true` |
 | `replicaCount` | Number of Keycloak replicas | `1` |
 | `cache.stack` | Cache stack for multi-replica production | `jdbc-ping` |
+| `cache.embeddedNetworkBindPort` | Non-privileged cache transport port (1024-15535); failure detection adds 50000; changes require a Recreate rollout | `7800` |
 | `cache.multiReplicaDefaults.enabled` | Apply default scheduling hints for multi-replica workloads | `true` |
 | `cache.multiReplicaDefaults.podAntiAffinity` | Generated pod anti-affinity mode | `preferred` |
 | `resources` | Explicit CPU and memory requests/limits for the main container | `{}` |

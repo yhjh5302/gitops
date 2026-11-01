@@ -20,11 +20,11 @@ echo -e "${GREEN}1단계: Jetstack Helm Repository 등록${NC}"
 helm repo add jetstack https://charts.jetstack.io --force-update
 helm repo update jetstack
 
-echo -e "\n${GREEN}2단계: Cert Manager 설치 (v1.21.1, CRD 포함)${NC}"
+echo -e "\n${GREEN}2단계: Cert Manager 설치 (v1.21.3, CRD 포함)${NC}"
 helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
-  --version v1.21.1 \
+  --version v1.21.3 \
   --set crds.enabled=true \
   --wait --timeout 5m
 

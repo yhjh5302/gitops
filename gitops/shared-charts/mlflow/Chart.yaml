@@ -1,21 +1,21 @@
 annotations:
   artifacthub.io/changes: |-
     - kind: changed
-      description: Update burakince/mlflow image version to 3.15.1
+      description: Update burakince/mlflow image version to 3.16.0
       links:
         - name: Upstream Project
           url: https://hub.docker.com/r/burakince/mlflow
     - kind: changed
-      description: Update dependency postgresql from 18.8.4 to 18.8.6
+      description: Update dependency postgresql from 18.8.13 to 18.8.17
       links:
         - name: ArtifactHub
           url: https://artifacthub.io/packages/helm/bitnami/postgresql
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |-
     - name: mlflow
-      image: burakince/mlflow:3.15.1
+      image: burakince/mlflow:3.16.0
     - name: oauth2-proxy
-      image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.3
+      image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.4
     - name: dbchecker
       image: library/busybox:1.38.0
     - name: ini-file-initializer
@@ -56,12 +56,12 @@ annotations:
     fingerprint: 939B1A0ED8AAA8E722ACCDB3B6A012EE8A76426A
     url: https://keybase.io/communitycharts/pgp_keys.asc
 apiVersion: v2
-appVersion: 3.15.1
+appVersion: 3.16.0
 dependencies:
 - condition: postgresql.enabled
   name: postgresql
   repository: https://charts.bitnami.com/bitnami
-  version: 18.8.6
+  version: 18.8.17
 - condition: mysql.enabled
   name: mysql
   repository: https://charts.bitnami.com/bitnami
@@ -96,4 +96,4 @@ sources:
 - https://github.com/burakince/mlflow
 - https://github.com/mlflow/mlflow
 type: application
-version: 1.11.4
+version: 1.11.7

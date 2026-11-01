@@ -58,7 +58,14 @@ kubectl apply -k "https://github.com/argoproj/argo-workflows/manifests/base/crds
 ```
 
 ### ServiceAccount for Workflow Spec
-In order for each Workflow run, you create ServiceAccount via `values.yaml` like below.
+
+The workflow executor needs RBAC to report status back to the controller (creating and patching `workflowtaskresults.argoproj.io`). The default ServiceAccount in a namespace does not have this permission, so submitting a workflow without any setup fails with:
+
+```
+workflowtaskresults.argoproj.io is forbidden: User "system:serviceaccount:<namespace>:default" cannot create resource "workflowtaskresults"
+```
+
+To have the chart create a workflow ServiceAccount with the required RBAC in the release namespace (and any `controller.workflowNamespaces`), configure `values.yaml` like below, and submit workflows with that ServiceAccount (`argo submit --serviceaccount argo-workflow ...` or `spec.serviceAccountName`).
 
 ```yaml
 workflow:
@@ -302,9 +309,12 @@ Fields to note:
 | controller.configMap.annotations | object | `{}` | ConfigMap annotations |
 | controller.configMap.create | bool | `true` | Create a ConfigMap for the controller |
 | controller.configMap.name | string | `""` | ConfigMap name |
+| controller.configMap.restartOnChange | bool | `false` | Add checksum/config pod annotation to restart the controller when the ConfigMap changes. Alternative to the built-in config watcher; does not cover semaphore ConfigMaps. |
 | controller.cronWorkflowWorkers | string | `nil` | Number of cron workflow workers Only valid for 3.5+ |
 | controller.deploymentAnnotations | object | `{}` | deploymentAnnotations is an optional map of annotations to be applied to the controller Deployment |
 | controller.disableAgentPodCreation | bool | `false` | Disable the creation of agent pods, which are used for HTTP and Plugin templates. When enabled, HTTP and Plugin templates will not be processed by this controller. Only valid for 4.1+ |
+| controller.dnsConfig | object | `{}` | [DNS configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) for controller pods |
+| controller.dnsPolicy | string | `""` | Alternative DNS policy for controller pods |
 | controller.envFrom | list | `[]` | envFrom to pass to the controller container |
 | controller.extraArgs | list | `[]` | Extra arguments to be added to the controller |
 | controller.extraContainers | list | `[]` | Extra containers to be added to the controller deployment |
@@ -328,7 +338,7 @@ Fields to note:
 | controller.logging.format | string | `"text"` | Set the logging format (one of: `text`, `json`) |
 | controller.logging.globallevel | string | `"0"` | Set the glog logging level |
 | controller.logging.level | string | `"info"` | Set the logging level (one of: `debug`, `info`, `warn`, `error`) |
-| controller.metricsConfig.enabled | bool | `false` | Enables prometheus metrics server |
+| controller.metricsConfig.enabled | string | `true`  (Argo Workflows default) | Enables prometheus metrics server |
 | controller.metricsConfig.headlessService | bool | `false` | Flag to enable headless service |
 | controller.metricsConfig.honorLabels | bool | `false` | When true, honorLabels preserves the metric’s labels when they collide with the target’s labels. |
 | controller.metricsConfig.ignoreErrors | bool | `false` | Flag that instructs prometheus to ignore metric emission errors. |
@@ -341,6 +351,7 @@ Fields to note:
 | controller.metricsConfig.portName | string | `"metrics"` | Container metrics port name |
 | controller.metricsConfig.relabelings | list | `[]` | ServiceMonitor relabel configs to apply to samples before scraping |
 | controller.metricsConfig.scheme | string | `"http"` | serviceMonitor scheme |
+| controller.metricsConfig.scrapeTimeout | string | `""` | Prometheus ServiceMonitor scrapeTimeout. If empty, Prometheus uses the global scrape timeout unless it is less than the target's scrape interval value in which the latter is used. |
 | controller.metricsConfig.secure | bool | `false` | Flag that use a self-signed cert for TLS |
 | controller.metricsConfig.servicePort | int | `8080` | Service metrics port |
 | controller.metricsConfig.servicePortName | string | `"metrics"` | Service metrics port name |
@@ -388,6 +399,7 @@ Fields to note:
 | controller.telemetryConfig.path | string | `"/telemetry"` | telemetry path |
 | controller.telemetryConfig.port | int | `8081` | telemetry container port |
 | controller.telemetryConfig.scheme | string | `"http"` | telemetry serviceMonitor scheme to use |
+| controller.telemetryConfig.scrapeTimeout | string | `""` | Prometheus ServiceMonitor scrapeTimeout. If empty, Prometheus uses the global scrape timeout unless it is less than the target's scrape interval value in which the latter is used. |
 | controller.telemetryConfig.secure | bool | `false` | Flag that use a self-signed cert for TLS |
 | controller.telemetryConfig.servicePort | int | `8081` | telemetry service port |
 | controller.telemetryConfig.servicePortName | string | `"telemetry"` | telemetry service port name |
@@ -418,6 +430,7 @@ Fields to note:
 |-----|------|---------|-------------|
 | executor.args | list | `[]` | Passes arguments to the executor processes |
 | executor.env | list | `[]` | Adds environment variables for the executor. |
+| executor.image.nonroot | bool | `false` | Use the `-nonroot` executor image variant. When enabled, the `-nonroot` suffix is appended to the resolved image tag. |
 | executor.image.pullPolicy | string | `""` | Image PullPolicy to use for the Workflow Executors. Defaults to `.Values.images.pullPolicy`. |
 | executor.image.registry | string | `"quay.io"` | Registry to use for the Workflow Executors |
 | executor.image.repository | string | `"argoproj/argoexec"` | Repository to use for the Workflow Executors |
@@ -453,6 +466,8 @@ Fields to note:
 | server.clusterWorkflowTemplates.enableEditing | bool | `true` | Give the server permissions to edit ClusterWorkflowTemplates. |
 | server.clusterWorkflowTemplates.enabled | bool | `true` | Create a ClusterRole and CRB for the server to access ClusterWorkflowTemplates. |
 | server.deploymentAnnotations | object | `{}` | optional map of annotations to be applied to the ui Deployment |
+| server.dnsConfig | object | `{}` | [DNS configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) for server pods |
+| server.dnsPolicy | string | `""` | Alternative DNS policy for server pods |
 | server.enabled | bool | `true` | Deploy the Argo Server |
 | server.envFrom | list | `[]` | envFrom to pass to the argo-server container |
 | server.extraArgs | list | `[]` | Extra arguments to provide to the Argo server binary. |

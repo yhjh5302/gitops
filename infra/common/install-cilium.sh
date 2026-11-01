@@ -20,21 +20,42 @@ echo "1단계: Cilium Helm Repository 등록"
 helm repo add cilium https://helm.cilium.io/ || true
 helm repo update
 
-# 2. Cilium Helm 설치 파라미터 변수 정의 (인자 또는 환경변수로부터 획득)
-K8S_SERVICE_HOST="${K8S_SERVICE_HOST:-local-cluster-control-plane}"
-K8S_SERVICE_PORT="${K8S_SERVICE_PORT:-6443}"
-POD_CIDR="${POD_CIDR:-10.233.0.0/16}"
+# 2. 클러스터 환경 정보 자동 감지 (Kind vs Kubeadm/외부 환경)
+CURRENT_CTX=$(kubectl config current-context 2>/dev/null || echo "")
+SERVER_ADDR=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null | sed -E 's|https?://||')
+AUTO_HOST="${SERVER_ADDR%:*}"
+AUTO_PORT="${SERVER_ADDR##*:}"
 
-# 위치 파라미터가 선언되었을 경우 덮어쓰기 지원
-if [ $# -ge 1 ] && [ -n "$1" ]; then
-  K8S_SERVICE_HOST="$1"
+# Pod CIDR 자동 감지 (kube-proxy ConfigMap -> kubeadm-config -> Node podCIDR 순)
+AUTO_CIDR=$(kubectl get cm -n kube-system kube-proxy -o yaml 2>/dev/null | awk '/podCIDR/ {print $2}' | tr -d '"')
+if [ -z "${AUTO_CIDR}" ]; then
+  AUTO_CIDR=$(kubectl get cm -n kube-system kubeadm-config -o yaml 2>/dev/null | awk '/podSubnet:/ {print $2}' | tr -d '"')
 fi
-if [ $# -ge 2 ] && [ -n "$2" ]; then
-  K8S_SERVICE_PORT="$2"
+if [ -z "${AUTO_CIDR}" ]; then
+  NODE_CIDR=$(kubectl get nodes -o jsonpath='{.items[0].spec.podCIDR}' 2>/dev/null)
+  if [ -n "${NODE_CIDR}" ]; then
+    AUTO_CIDR=$(echo "${NODE_CIDR}" | sed -E 's|([0-9]+\.[0-9]+)\.[0-9]+\.[0-9]+/[0-9]+|\1.0.0/16|')
+  fi
 fi
-if [ $# -ge 3 ] && [ -n "$3" ]; then
-  POD_CIDR="$3"
+
+# Kind 환경인지 확인 (Context 접두사 kind- 또는 로컬 loopback 주소 감지)
+if [[ "${CURRENT_CTX}" == kind-* ]] || [[ "${AUTO_HOST}" == "127.0.0.1" ]] || [[ "${AUTO_HOST}" == "localhost" ]]; then
+  KIND_CP_NODE=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "local-cluster-control-plane")
+  DEFAULT_HOST="${KIND_CP_NODE:-local-cluster-control-plane}"
+  DEFAULT_PORT="6443"
+  DEFAULT_CIDR="${AUTO_CIDR:-10.233.0.0/16}"
+  echo " -> 클러스터 환경 감지: Kind 환경 (Control-Plane Node: ${DEFAULT_HOST})"
+else
+  DEFAULT_HOST="${AUTO_HOST:-cluster-endpoint}"
+  DEFAULT_PORT="${AUTO_PORT:-6443}"
+  DEFAULT_CIDR="${AUTO_CIDR:-10.233.0.0/16}"
+  echo " -> 클러스터 환경 감지: Kubeadm/외부 환경 (API Endpoint: ${DEFAULT_HOST}:${DEFAULT_PORT})"
 fi
+
+# 최종 파라미터 매핑: 위치 인자($1, $2, $3) -> 환경변수 -> 감지된 기본값 순
+K8S_SERVICE_HOST="${1:-${K8S_SERVICE_HOST:-${DEFAULT_HOST}}}"
+K8S_SERVICE_PORT="${2:-${K8S_SERVICE_PORT:-${DEFAULT_PORT}}}"
+POD_CIDR="${3:-${POD_CIDR:-${DEFAULT_CIDR}}}"
 
 echo " -> Target K8s Service Host: ${K8S_SERVICE_HOST}"
 echo " -> Target K8s Service Port: ${K8S_SERVICE_PORT}"
@@ -48,15 +69,15 @@ if [ "${NODE_COUNT}" -eq 1 ]; then
   echo " -> 싱글 노드 클러스터 감지: Operator 복제본을 1개로 조정하여 대기를 수행합니다."
   HELM_EXTRA_ARGS+=("--set" "operator.replicas=1" "--wait" "--timeout" "5m")
 elif [ "${NODE_COUNT}" -gt 1 ]; then
-  echo " -> 멀티 노드 클러스터 감지: 기본 이중화 모드로 대기 설치를 진행합니다."
-  HELM_EXTRA_ARGS+=("--wait" "--timeout" "5m")
+  echo " -> 멀티 노드 클러스터 감지: 이중화 모드로 배포하며 워커 노드(GPU 등) 테인트를 허용합니다."
+  HELM_EXTRA_ARGS+=("--set" "operator.tolerations[0].operator=Exists" "--wait" "--timeout" "5m")
 else
   echo " -> ⚠️ 경고: 활성화된 노드를 감지할 수 없습니다. 대기 없이 배포를 진행합니다."
 fi
 
 echo "4단계: Cilium CNI 설치 (Kube-Proxy 대체 모드 및 eBPF 호스트 라우팅)"
 helm upgrade --install cilium cilium/cilium \
-  --version 1.20.1 \
+  --version 1.20.4 \
   --namespace kube-system \
   --set k8sServiceHost="${K8S_SERVICE_HOST}" \
   --set k8sServicePort="${K8S_SERVICE_PORT}" \

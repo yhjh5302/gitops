@@ -1,7 +1,7 @@
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
-    - 'restored `VM_ENABLEDPROMETHEUSCONVERTER_*` env vars when `operator.disable_prometheus_converter: true` and removed Prometheus CRD names (`PodMonitor`, `ServiceMonitor`, etc.) from `--controller.disableReconcileFor`. In operator v0.68.x the `controllersByName` map does not include Prometheus CRD names — passing them causes the operator to fail on startup.'
+    - bump `victoria-metrics-common` dependency to `0.4.*`. Resource names are unchanged.
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Sources
@@ -21,11 +21,11 @@ annotations:
     Chart documentation is available [here](https://docs.victoriametrics.com/helm/victoria-metrics-operator/).
     Changelog is [here](https://docs.victoriametrics.com/helm/victoria-metrics-operator/changelog/).
 apiVersion: v2
-appVersion: v0.74.0
+appVersion: v0.75.0
 dependencies:
 - name: victoria-metrics-common
   repository: oci://ghcr.io/victoriametrics/helm-charts
-  version: 0.3.*
+  version: 0.4.*
 - condition: crds.plain
   name: crds
   repository: ""
@@ -49,4 +49,4 @@ sources:
 - https://github.com/VictoriaMetrics/helm-charts
 - https://github.com/VictoriaMetrics/operator
 type: application
-version: 0.67.2
+version: 0.68.1

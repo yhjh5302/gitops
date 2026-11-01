@@ -37,7 +37,7 @@ spec:
           effect: "NoSchedule"
       initContainers:
         - name: download-model
-          image: vllm/vllm-openai:v0.24.0
+          image: vllm/vllm-openai:v0.32.0
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -55,7 +55,7 @@ spec:
               subPath: huggingface
       containers:
         - name: vllm-qwen
-          image: vllm/vllm-openai:v0.24.0
+          image: vllm/vllm-openai:v0.32.0
           command: ["/bin/bash", "-c"]
           args:
             - |

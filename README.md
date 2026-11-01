@@ -105,30 +105,30 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 
 | Layer | Component Name | Base Version / Image Tag | Helm Chart Version | Remarks |
 | :--- | :--- | :--- | :--- | :--- |
-| **OS / K8s** | Kubernetes | `v1.36.3` | - | Native DRA v1 support |
-| **Infra Addons** | Cilium CNI | `1.20.1` | `1.20.1` | eBPF host routing (KubeProxyReplacement) |
+| **OS / K8s** | Kubernetes | `v1.37.2` | - | Native DRA v1 support |
+| **Infra Addons** | Cilium CNI | `1.20.4` | `1.20.4` | eBPF host routing (KubeProxyReplacement) |
 | **Infra Addons** | HashiCorp Vault | `2.0.4` | `0.34.1` | Raft HA Mode |
-| **Infra Addons** | External Secrets | `v2.9.0` | `2.9.0` | Synchronizes Vault secrets to K8s |
-| **Infra Addons** | Cert Manager | `v1.21.1` | `v1.21.1` | Handles PKI and certificate issuance |
-| **GitOps System**| Argo CD | `v3.4.4` | `10.4.0` | Central continuous deployment engine |
-| **GitOps System**| Keycloak IDP | `26.7.2` | `3.0.10` | OIDC Identity Provider (Image tag overridden in manifest) |
+| **Infra Addons** | External Secrets | `v2.14.0` | `2.14.0` | Synchronizes Vault secrets to K8s |
+| **Infra Addons** | Cert Manager | `v1.21.3` | `v1.21.3` | Handles PKI and certificate issuance |
+| **GitOps System**| Argo CD | `v3.5.6` | `10.11.6` | Central continuous deployment engine |
+| **GitOps System**| Keycloak IDP | `26.8.1` | `3.0.19` | OIDC Identity Provider (Image tag overridden in manifest) |
 | **GitOps System**| PostgreSQL | `18-alpine` | - | Shared DB for Keycloak, MLflow, and Argo |
 | **GitOps System**| Valkey | `9.1.0-alpine` | - | Redis successor for caching |
-| **GitOps System**| OpenTelemetry Collector | `0.158.0` | `0.170.0` | Unified metrics & logs collector |
-| **GitOps System**| Istio (Ambient) | `1.30.3` | `1.30.3` | L4/L7 sidecarless service mesh |
-| **GitOps System**| K-Gateway | `v2.4.2` | `v2.4.2` | Envoy 1.38 Gateway API implementation |
-| **GitOps System**| oauth2-proxy | `7.15.3` | `10.7.0` | Ingress authentication proxy handler |
-| **GitOps System**| VictoriaMetrics | `v1.150.0` | `0.91.0` | Grafana (`13.0.*`) and monitoring stack |
-| **GitOps System**| VictoriaLogs | `v1.52.0` | `0.2.8` | VictoriaMetrics logging subsystem |
-| **GitOps System**| GPU Operator | `v26.3.3` | `v26.3.3` | NVIDIA GPU driver & runtime provisioning |
-| **GitOps System**| NVIDIA DRA Driver | `0.5.0` | `0.5.0` | DRA-based dynamic GPU mapping |
+| **GitOps System**| OpenTelemetry Collector | `0.163.2` | `0.178.1` | Unified metrics & logs collector |
+| **GitOps System**| Istio (Ambient) | `1.30.7` | `1.30.7` | L4/L7 sidecarless service mesh |
+| **GitOps System**| K-Gateway | `2.4.7` | `2.4.7` | Envoy Gateway API implementation |
+| **GitOps System**| oauth2-proxy | `7.15.5` | `10.7.1` | Ingress authentication proxy handler |
+| **GitOps System**| VictoriaMetrics | `v1.155.0` | `0.97.0` | Grafana and monitoring stack |
+| **GitOps System**| VictoriaLogs | `v1.53.0` | `0.2.9` | VictoriaMetrics logging subsystem |
+| **GitOps System**| GPU Operator | `v26.7.2` | `v26.7.2` | NVIDIA GPU driver & runtime provisioning |
+| **GitOps System**| NVIDIA DRA Driver | `0.5.1` | `0.5.1` | DRA-based dynamic GPU mapping |
 | **GitOps System**| kube-state-metrics | `2.19.1` | `7.5.1` | Kubernetes resource metrics exporter |
-| **GitOps System**| Kyverno | `v1.19.0` | `3.9.0` | Kubernetes policy engine |
-| **GitOps System**| Argo Workflows | `v4.1.1` | `2.0.1` | Batch workflow engine |
-| **GitOps System**| MLflow | `3.15.1` | `1.11.4` | ML model registry (Image tag overridden in manifest) |
-| **Inference App** | Qwen Serving    | `Qwen/Qwen3.5-9B`      | - | Running Qwen 3.5 9B FP8 via vLLM and vLLM Router |
+| **GitOps System**| Kyverno | `v1.19.2` | `3.9.2` | Kubernetes policy engine |
+| **GitOps System**| Argo Workflows | `v4.1.6` | `2.0.15` | Batch workflow engine |
+| **GitOps System**| MLflow | `3.16.0` | `1.11.7` | ML model registry (Image tag overridden in manifest) |
+| **Inference App** | Qwen Serving    | `Qwen/Qwen3.5-9B`      | - | Running Qwen 3.5 9B FP8 via vLLM (v0.32.0) and vLLM Router |
 | **Inference App** | Gemma Serving   | `google/gemma-4-e4b-it`| - | (Inactive / Disabled via ApplicationSet exclusion) |
-| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | TTS via SGLang-Omni (`dev`) |
+| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | TTS via SGLang-Omni (`v0.2.0`) |
 | **Inference App** | Whisper Serving | `fedirz/faster-whisper-server:latest-cpu` | - | STT via faster-whisper-server |
 
 ---

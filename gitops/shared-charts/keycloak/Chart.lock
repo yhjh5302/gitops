@@ -1,9 +1,9 @@
 dependencies:
 - name: postgresql
   repository: oci://ghcr.io/helmforgedev/helm
-  version: 2.0.5
+  version: 2.1.1
 - name: mysql
   repository: oci://ghcr.io/helmforgedev/helm
-  version: 2.0.3
-digest: sha256:616784c2b9caf40677606aceb7ca3553a2bddcfd927d9c39b26de6f248bc8183
-generated: "2026-08-18T13:36:56.67486332Z"
+  version: 2.1.1
+digest: sha256:0653861687334db500892035bb66373fa40d12c131893930a9a405d995c2aaaf
+generated: "2026-10-30T18:50:06.773301242Z"

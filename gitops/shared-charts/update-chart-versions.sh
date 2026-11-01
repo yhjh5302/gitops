@@ -120,13 +120,17 @@ for key in "${keys[@]}"; do
   remote_app="N/A"
   
   if [ "$key" = "kgateway" ]; then
-    # OCI-based K-Gateway static target update
-    remote_chart="v2.4.2"
-    remote_app="v2.4.2"
+    # OCI-based K-Gateway dynamic target update
+    raw_ver=$(helm show chart oci://cr.kgateway.dev/kgateway-dev/charts/kgateway 2>/dev/null | awk '/^version:/ {print $2}' || true)
+    remote_chart="${raw_ver:-2.4.7}"
+    raw_app=$(helm show chart oci://cr.kgateway.dev/kgateway-dev/charts/kgateway 2>/dev/null | awk '/^appVersion:/ {print $2}' || true)
+    remote_app="${raw_app:-2.4.7}"
   elif [ "$key" = "nvidia-dra-driver" ]; then
-    # OCI-based NVIDIA DRA Driver static target update
-    remote_chart="0.5.0"
-    remote_app="0.5.0"
+    # OCI-based NVIDIA DRA Driver dynamic target update
+    raw_ver=$(helm show chart oci://registry.k8s.io/dra-driver-nvidia/charts/dra-driver-nvidia-gpu 2>/dev/null | awk '/^version:/ {print $2}' || true)
+    remote_chart="${raw_ver:-0.5.1}"
+    raw_app=$(helm show chart oci://registry.k8s.io/dra-driver-nvidia/charts/dra-driver-nvidia-gpu 2>/dev/null | awk '/^appVersion:/ {print $2}' || true)
+    remote_app="${raw_app:-0.5.1}"
   elif [ "$key" = "gateway-api" ]; then
     # Fetch latest Gateway API release version from GitHub
     remote_chart=$(curl -s "https://api.github.com/repos/kubernetes-sigs/gateway-api/releases/latest" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')

@@ -28,15 +28,27 @@ spec:
         {{- with.Values.controller.podLabels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.controller.podAnnotations }}
+      {{- if or .Values.controller.podAnnotations (and .Values.controller.configMap.create .Values.controller.configMap.restartOnChange) }}
       annotations:
+        {{- with .Values.controller.podAnnotations }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if and .Values.controller.configMap.create .Values.controller.configMap.restartOnChange }}
+        checksum/config: {{ include "argo-workflows.controller.config.checksum" (dict "context" $ "path" "/controller/workflow-controller-config-map.yaml") }}
+        {{- end }}
       {{- end }}
     spec:
       serviceAccountName: {{ template "argo-workflows.controllerServiceAccountName" . }}
       {{- with .Values.controller.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.dnsPolicy }}
+      dnsPolicy: {{ . }}
       {{- end }}
       {{- with .Values.controller.extraInitContainers }}
       initContainers:
@@ -51,7 +63,11 @@ spec:
           - "--configmap"
           - "{{ template "argo-workflows.controller.config-map.name" . }}"
           - "--executor-image"
-          - "{{- include "argo-workflows.image" (dict "context" . "image" .Values.executor.image) }}:{{ default (include "argo-workflows.defaultTag" .) .Values.executor.image.tag }}"
+          {{- $executorTag := default (include "argo-workflows.defaultTag" .) .Values.executor.image.tag }}
+          {{- if and .Values.executor.image.nonroot (not (hasSuffix "-nonroot" $executorTag)) }}
+          {{- $executorTag = printf "%s-nonroot" $executorTag }}
+          {{- end }}
+          - "{{- include "argo-workflows.image" (dict "context" . "image" .Values.executor.image) }}:{{ $executorTag }}"
           - "--loglevel"
           - "{{ .Values.controller.logging.level }}"
           - "--gloglevel"

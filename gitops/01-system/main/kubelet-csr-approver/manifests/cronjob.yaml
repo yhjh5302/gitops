@@ -16,7 +16,7 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: approver
-            image: alpine/k8s:1.35.6
+            image: alpine/k8s:1.37.2
             command:
             - /bin/sh
             - -c

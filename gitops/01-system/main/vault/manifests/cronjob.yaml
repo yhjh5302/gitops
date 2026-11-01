@@ -62,7 +62,7 @@ spec:
           serviceAccountName: vault-auto-unsealer
           containers:
           - name: unsealer
-            image: curlimages/curl:8.4.0
+            image: curlimages/curl:latest
             env:
             - name: UNSEAL_KEY
               valueFrom:

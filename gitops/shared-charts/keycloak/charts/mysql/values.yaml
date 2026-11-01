@@ -28,7 +28,7 @@ image:
   # -- MySQL image repository
   repository: docker.io/library/mysql
   # -- MySQL image tag
-  tag: "9.7.2"
+  tag: "26.7.0"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -136,6 +136,9 @@ replication:
     resourcesPreset: none
     # -- Number of read replica pods
     replicaCount: 2
+    clone:
+      # -- Resources for the clone-source init container
+      resources: {}
     persistence:
       # -- Enable PVCs for read replicas
       enabled: true
@@ -277,7 +280,7 @@ backup:
       pullPolicy: IfNotPresent
     mysql:
       repository: docker.io/library/mysql
-      tag: "9.7.2"
+      tag: "26.7.0"
       pullPolicy: IfNotPresent
   s3:
     # -- S3-compatible endpoint URL, for example: https://s3.amazonaws.com or https://minio.example.com

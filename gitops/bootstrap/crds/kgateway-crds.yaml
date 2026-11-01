@@ -119,6 +119,7 @@ spec:
                       hour. To disable idle timeouts explicitly set this to 0.\n\tDisabling
                       this timeout has a highly likelihood of yielding connection
                       leaks due to lost TCP\n\tFIN packets, etc."
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -142,6 +143,7 @@ spec:
                     description: |-
                       Total duration to keep alive an HTTP request/response stream. If the time limit is reached the stream will be
                       reset independent of any other timeouts. If not specified, this value is not set.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -150,6 +152,7 @@ spec:
               connectTimeout:
                 description: The timeout for new network connections to hosts in the
                   cluster.
+                maxLength: 32
                 type: string
                 x-kubernetes-validations:
                 - message: invalid duration value
@@ -164,6 +167,7 @@ spec:
                       Jitter adds a random delay of up to this duration before each DNS refresh,
                       spreading query load over time and helping prevent thundering-herd spikes.
                       Must be less than or equal to refreshRate when both are set.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -176,6 +180,7 @@ spec:
                       When Envoy respects DNS TTLs, lower TTL values effectively override this setting,
                       so RefreshRate acts as the maximum polling interval.
                       Recommended value for large-scale deployments is 60s or higher.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -251,6 +256,7 @@ spec:
                     type: object
                   interval:
                     description: Interval is the time between health checks.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -259,6 +265,7 @@ spec:
                     description: |-
                       Timeout is time to wait for a health check response. If the timeout is reached the
                       health check attempt will be considered a failure.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -320,6 +327,7 @@ spec:
                           If set, a PING is sent before dispatching new streams on a connection that
                           has been idle for at least this duration, verifying the connection is
                           still alive before reusing it.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -330,6 +338,7 @@ spec:
                         description: |-
                           Interval between keepalive PINGs. If unset, PINGs are only sent when
                           triggered by ConnectionIdleInterval.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -341,6 +350,7 @@ spec:
                           Timeout after which the connection is closed if no response to a keepalive
                           PING is received. A PING response is considered received if any frame
                           arrives on the connection while the PING is outstanding.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -472,6 +482,7 @@ spec:
                               Represents the size of slow start window.
                               If set, the newly created host remains in slow start mode starting from its creation time
                               for the duration of slow start window.
+                            maxLength: 32
                             type: string
                             x-kubernetes-validations:
                             - message: invalid duration value
@@ -528,6 +539,7 @@ spec:
                                     TTL specifies the time to live of the cookie.
                                     If specified, a cookie with the TTL will be generated if the cookie is not present.
                                     If the TTL is present and zero, the generated cookie will be a session cookie.
+                                  maxLength: 32
                                   type: string
                                   x-kubernetes-validations:
                                   - message: invalid duration value
@@ -618,6 +630,7 @@ spec:
                                     TTL specifies the time to live of the cookie.
                                     If specified, a cookie with the TTL will be generated if the cookie is not present.
                                     If the TTL is present and zero, the generated cookie will be a session cookie.
+                                  maxLength: 32
                                   type: string
                                   x-kubernetes-validations:
                                   - message: invalid duration value
@@ -712,6 +725,7 @@ spec:
                               Represents the size of slow start window.
                               If set, the newly created host remains in slow start mode starting from its creation time
                               for the duration of slow start window.
+                            maxLength: 32
                             type: string
                             x-kubernetes-validations:
                             - message: invalid duration value
@@ -723,6 +737,7 @@ spec:
                       This allows batch updates of endpoints health/weight/metadata that happen during a time window.
                       this help lower cpu usage when endpoint change rate is high. defaults to 1 second.
                       Set to 0 to disable and have changes applied immediately.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -810,6 +825,7 @@ spec:
                       The base time that a host is ejected for. The real time is equal to the
                       base time multiplied by the number of times the host has been ejected.
                       Defaults to 30s.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -833,6 +849,7 @@ spec:
                       The time interval between ejection analysis sweeps. This can result in
                       both new ejections as well as hosts being returned to service. Defaults
                       to 10s.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -948,6 +965,7 @@ spec:
                 properties:
                   keepAliveInterval:
                     description: The number of seconds between keep-alive probes.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -963,6 +981,7 @@ spec:
                   keepAliveTime:
                     description: The number of seconds a connection needs to be idle
                       before keep-alive probes start being sent.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -2588,6 +2607,7 @@ spec:
                       requestTimeout:
                         description: RequestTimeout is the timeout for the gRPC request.
                           This is the timeout for a specific request.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid timeout value
@@ -2616,6 +2636,7 @@ spec:
                                 description: BaseInterval specifies the base interval
                                   used with a fully jittered exponential back-off
                                   between retries.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -2626,6 +2647,7 @@ spec:
                                 description: |-
                                   MaxInterval specifies the maximum interval between retry attempts.
                                   Defaults to 10 times the BaseInterval if not set.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -2809,6 +2831,7 @@ spec:
                       requestTimeout:
                         description: RequestTimeout is the timeout for the HTTP request.
                           Default timeout is 2 seconds.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid timeout value
@@ -2837,6 +2860,7 @@ spec:
                                 description: BaseInterval specifies the base interval
                                   used with a fully jittered exponential back-off
                                   between retries.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -2847,6 +2871,7 @@ spec:
                                 description: |-
                                   MaxInterval specifies the maximum interval between retry attempts.
                                   Defaults to 10 times the BaseInterval if not set.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -3140,6 +3165,7 @@ spec:
                       requestTimeout:
                         description: RequestTimeout is the timeout for the gRPC request.
                           This is the timeout for a specific request.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid timeout value
@@ -3168,6 +3194,7 @@ spec:
                                 description: BaseInterval specifies the base interval
                                   used with a fully jittered exponential back-off
                                   between retries.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -3178,6 +3205,7 @@ spec:
                                 description: |-
                                   MaxInterval specifies the maximum interval between retry attempts.
                                   Defaults to 10 times the BaseInterval if not set.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -3198,6 +3226,7 @@ spec:
                     description: |-
                       MaxMessageTimeout specifies the upper bound of override_message_timeout that may be sent from the external processing server.
                       The default value 0, which effectively disables the override_message_timeout API.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid timeout value
@@ -3207,6 +3236,7 @@ spec:
                   messageTimeout:
                     description: MessageTimeout is the timeout for each message sent
                       to the external processing server.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid timeout value
@@ -3441,6 +3471,7 @@ spec:
                                       description: |-
                                         FailedRefetchDuration is how long to wait before retrying the fetch after a failure.
                                         If unspecified, Envoy default of 1 second is used.
+                                      maxLength: 32
                                       type: string
                                       x-kubernetes-validations:
                                       - message: invalid duration value
@@ -3532,6 +3563,7 @@ spec:
                                   description: |-
                                     Duration after which the cached JWKS expires.
                                     If unspecified, the default cache duration is 5 minutes.
+                                  maxLength: 32
                                   type: string
                                   x-kubernetes-validations:
                                   - message: invalid duration value
@@ -3553,6 +3585,7 @@ spec:
                                           description: |-
                                             BaseInterval is the base interval for the exponential backoff computation.
                                             It must be greater than zero and less than or equal to MaxInterval.
+                                          maxLength: 32
                                           type: string
                                           x-kubernetes-validations:
                                           - message: invalid duration value
@@ -3564,6 +3597,7 @@ spec:
                                           description: |-
                                             MaxInterval is the maximum interval between retries. If set, it must be greater than
                                             or equal to BaseInterval. Defaults to 10 times the BaseInterval.
+                                          maxLength: 32
                                           type: string
                                           x-kubernetes-validations:
                                           - message: invalid duration value
@@ -3947,8 +3981,10 @@ spec:
                       It discovers the authorizationEndpoint, tokenEndpoint, endSessionEndpoint, and jwksURI if specified in the discovery response.
                       Explicit configuration of these options will take precedence over the discovered values.
                       Refer to https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig for more details.
-                      Note that the OpenID provider configuration is cached and only refreshed periodically when the GatewayExtension object
-                      is reprocessed.
+                      Note that the OpenID provider configuration is cached. It is refreshed periodically in the background, and a failed
+                      discovery is retried, so a provider that is unreachable when the configuration is first discovered is picked up once
+                      it becomes reachable. Discovery stops once authorizationEndpoint, tokenEndpoint, endSessionEndpoint, and jwksURI
+                      (when JWT parsing is configured) are all set explicitly, since none of the discovered values are then used.
                     pattern: ^https://([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(:[0-9]{1,5})?(/[a-zA-Z0-9\-._~!$&'()*+,;=:@%]*)*/?$
                     type: string
                   jwt:
@@ -4298,6 +4334,7 @@ spec:
                       requestTimeout:
                         description: RequestTimeout is the timeout for the gRPC request.
                           This is the timeout for a specific request.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid timeout value
@@ -4326,6 +4363,7 @@ spec:
                                 description: BaseInterval specifies the base interval
                                   used with a fully jittered exponential back-off
                                   between retries.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -4336,6 +4374,7 @@ spec:
                                 description: |-
                                   MaxInterval specifies the maximum interval between retry attempts.
                                   Defaults to 10 times the BaseInterval if not set.
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -4358,6 +4397,7 @@ spec:
                       Timeout provides an optional timeout value for requests to the rate limit service.
                       For rate limiting, prefer using this timeout rather than setting the generic `timeout` on the `GrpcService`.
                       See [envoy issue](https://github.com/envoyproxy/envoy/issues/20070) for more info.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -13049,6 +13089,7 @@ spec:
                                   description: The base interval to be used for the
                                     next back off computation. It should be greater
                                     than zero and less than or equal to max_interval.
+                                  maxLength: 32
                                   type: string
                                   x-kubernetes-validations:
                                   - message: invalid duration value
@@ -13058,6 +13099,7 @@ spec:
                                     retries. This parameter is optional, but must
                                     be greater than or equal to the base_interval
                                     if set. The default is 10 times the base_interval.
+                                  maxLength: 32
                                   type: string
                                   x-kubernetes-validations:
                                   - message: invalid duration value
@@ -13076,6 +13118,7 @@ spec:
                         timeout:
                           description: The timeout for the gRPC request. This is the
                             timeout for a specific request
+                          maxLength: 32
                           type: string
                           x-kubernetes-validations:
                           - message: invalid duration value
@@ -13286,6 +13329,7 @@ spec:
                                         the next back off computation. It should be
                                         greater than zero and less than or equal to
                                         max_interval.
+                                      maxLength: 32
                                       type: string
                                       x-kubernetes-validations:
                                       - message: invalid duration value
@@ -13295,6 +13339,7 @@ spec:
                                         between retries. This parameter is optional,
                                         but must be greater than or equal to the base_interval
                                         if set. The default is 10 times the base_interval.
+                                      maxLength: 32
                                       type: string
                                       x-kubernetes-validations:
                                       - message: invalid duration value
@@ -13314,6 +13359,7 @@ spec:
                             timeout:
                               description: The timeout for the gRPC request. This
                                 is the timeout for a specific request
+                              maxLength: 32
                               type: string
                               x-kubernetes-validations:
                               - message: invalid duration value
@@ -13644,6 +13690,7 @@ spec:
                 description: |-
                   IdleTimeout is the idle timeout for connections.
                   See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/protocol.proto#envoy-v3-api-msg-config-core-v3-httpprotocoloptions
+                maxLength: 32
                 type: string
                 x-kubernetes-validations:
                 - message: invalid duration value
@@ -14708,6 +14755,22 @@ spec:
                 format: int32
                 minimum: 0
                 type: integer
+              mergeSlashes:
+                description: |-
+                  MergeSlashes determines whether the connection manager merges adjacent slashes in the request
+                  path before routing. This defaults to true. Disable this if a backend (e.g. an S3-compatible
+                  object store) relies on repeated slashes in the path having meaning, such as object keys that
+                  contain "//".
+                  See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-merge-slashes
+                type: boolean
+              normalizePath:
+                description: |-
+                  NormalizePath determines whether the connection manager normalizes the path per RFC 3986 before
+                  routing, e.g. collapsing `.` and `..` segments and decoding percent-encoded characters. This
+                  defaults to true. Disable this if a backend (e.g. an S3-compatible object store) needs to see
+                  the original, unnormalized request path.
+                  See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-normalize-path
+                type: boolean
               preserveExternalRequestId:
                 description: |-
                   PreserveExternalRequestId determines whether the connection manager will keep the x-request-id header if passed for
@@ -14744,6 +14807,7 @@ spec:
                 description: |-
                   StreamIdleTimeout is the idle timeout for HTTP streams.
                   See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-stream-idle-timeout
+                maxLength: 32
                 type: string
                 x-kubernetes-validations:
                 - message: invalid duration value
@@ -15134,6 +15198,7 @@ spec:
                                           for the next back off computation. It should
                                           be greater than zero and less than or equal
                                           to max_interval.
+                                        maxLength: 32
                                         type: string
                                         x-kubernetes-validations:
                                         - message: invalid duration value
@@ -15144,6 +15209,7 @@ spec:
                                           but must be greater than or equal to the
                                           base_interval if set. The default is 10
                                           times the base_interval.
+                                        maxLength: 32
                                         type: string
                                         x-kubernetes-validations:
                                         - message: invalid duration value
@@ -15163,6 +15229,7 @@ spec:
                               timeout:
                                 description: The timeout for the gRPC request. This
                                   is the timeout for a specific request
+                                maxLength: 32
                                 type: string
                                 x-kubernetes-validations:
                                 - message: invalid duration value
@@ -16722,6 +16789,7 @@ spec:
                                             for the next back off computation. It
                                             should be greater than zero and less than
                                             or equal to max_interval.
+                                          maxLength: 32
                                           type: string
                                           x-kubernetes-validations:
                                           - message: invalid duration value
@@ -16732,6 +16800,7 @@ spec:
                                             but must be greater than or equal to the
                                             base_interval if set. The default is 10
                                             times the base_interval.
+                                          maxLength: 32
                                           type: string
                                           x-kubernetes-validations:
                                           - message: invalid duration value
@@ -16751,6 +16820,7 @@ spec:
                                 timeout:
                                   description: The timeout for the gRPC request. This
                                     is the timeout for a specific request
+                                  maxLength: 32
                                   type: string
                                   x-kubernetes-validations:
                                   - message: invalid duration value
@@ -16962,6 +17032,7 @@ spec:
                                                 used for the next back off computation.
                                                 It should be greater than zero and
                                                 less than or equal to max_interval.
+                                              maxLength: 32
                                               type: string
                                               x-kubernetes-validations:
                                               - message: invalid duration value
@@ -16972,6 +17043,7 @@ spec:
                                                 optional, but must be greater than
                                                 or equal to the base_interval if set.
                                                 The default is 10 times the base_interval.
+                                              maxLength: 32
                                               type: string
                                               x-kubernetes-validations:
                                               - message: invalid duration value
@@ -16991,6 +17063,7 @@ spec:
                                     timeout:
                                       description: The timeout for the gRPC request.
                                         This is the timeout for a specific request
+                                      maxLength: 32
                                       type: string
                                       x-kubernetes-validations:
                                       - message: invalid duration value
@@ -17322,6 +17395,7 @@ spec:
                         description: |-
                           IdleTimeout is the idle timeout for connections.
                           See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/protocol.proto#envoy-v3-api-msg-config-core-v3-httpprotocoloptions
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -18400,6 +18474,22 @@ spec:
                         format: int32
                         minimum: 0
                         type: integer
+                      mergeSlashes:
+                        description: |-
+                          MergeSlashes determines whether the connection manager merges adjacent slashes in the request
+                          path before routing. This defaults to true. Disable this if a backend (e.g. an S3-compatible
+                          object store) relies on repeated slashes in the path having meaning, such as object keys that
+                          contain "//".
+                          See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-merge-slashes
+                        type: boolean
+                      normalizePath:
+                        description: |-
+                          NormalizePath determines whether the connection manager normalizes the path per RFC 3986 before
+                          routing, e.g. collapsing `.` and `..` segments and decoding percent-encoded characters. This
+                          defaults to true. Disable this if a backend (e.g. an S3-compatible object store) needs to see
+                          the original, unnormalized request path.
+                          See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-normalize-path
+                        type: boolean
                       preserveExternalRequestId:
                         description: |-
                           PreserveExternalRequestId determines whether the connection manager will keep the x-request-id header if passed for
@@ -18436,6 +18526,7 @@ spec:
                         description: |-
                           StreamIdleTimeout is the idle timeout for HTTP streams.
                           See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-stream-idle-timeout
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -18747,6 +18838,7 @@ spec:
                                                   be used for the next back off computation.
                                                   It should be greater than zero and
                                                   less than or equal to max_interval.
+                                                maxLength: 32
                                                 type: string
                                                 x-kubernetes-validations:
                                                 - message: invalid duration value
@@ -18758,6 +18850,7 @@ spec:
                                                   than or equal to the base_interval
                                                   if set. The default is 10 times
                                                   the base_interval.
+                                                maxLength: 32
                                                 type: string
                                                 x-kubernetes-validations:
                                                 - message: invalid duration value
@@ -18778,6 +18871,7 @@ spec:
                                       timeout:
                                         description: The timeout for the gRPC request.
                                           This is the timeout for a specific request
+                                        maxLength: 32
                                         type: string
                                         x-kubernetes-validations:
                                         - message: invalid duration value
@@ -18973,6 +19067,7 @@ spec:
                     properties:
                       keepAliveInterval:
                         description: The number of seconds between keep-alive probes.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -18988,6 +19083,7 @@ spec:
                       keepAliveTime:
                         description: The number of seconds a connection needs to be
                           idle before keep-alive probes start being sent.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -19001,6 +19097,7 @@ spec:
                       If the timeout fires, the connection is closed. Setting this protects Envoy from clients that open connections and
                       then never complete the TLS handshake. Applied to every filter chain on the listener.
                       See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/listener/v3/listener_components.proto#envoy-v3-api-field-config-listener-v3-filterchain-transport-socket-connect-timeout
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -19944,6 +20041,7 @@ spec:
                                                   be used for the next back off computation.
                                                   It should be greater than zero and
                                                   less than or equal to max_interval.
+                                                maxLength: 32
                                                 type: string
                                                 x-kubernetes-validations:
                                                 - message: invalid duration value
@@ -19955,6 +20053,7 @@ spec:
                                                   than or equal to the base_interval
                                                   if set. The default is 10 times
                                                   the base_interval.
+                                                maxLength: 32
                                                 type: string
                                                 x-kubernetes-validations:
                                                 - message: invalid duration value
@@ -19975,6 +20074,7 @@ spec:
                                       timeout:
                                         description: The timeout for the gRPC request.
                                           This is the timeout for a specific request
+                                        maxLength: 32
                                         type: string
                                         x-kubernetes-validations:
                                         - message: invalid duration value
@@ -20192,6 +20292,7 @@ spec:
                                                       off computation. It should be
                                                       greater than zero and less than
                                                       or equal to max_interval.
+                                                    maxLength: 32
                                                     type: string
                                                     x-kubernetes-validations:
                                                     - message: invalid duration value
@@ -20203,6 +20304,7 @@ spec:
                                                       be greater than or equal to
                                                       the base_interval if set. The
                                                       default is 10 times the base_interval.
+                                                    maxLength: 32
                                                     type: string
                                                     x-kubernetes-validations:
                                                     - message: invalid duration value
@@ -20224,6 +20326,7 @@ spec:
                                             description: The timeout for the gRPC
                                               request. This is the timeout for a specific
                                               request
+                                            maxLength: 32
                                             type: string
                                             x-kubernetes-validations:
                                             - message: invalid duration value
@@ -20559,6 +20662,7 @@ spec:
                               description: |-
                                 IdleTimeout is the idle timeout for connections.
                                 See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/protocol.proto#envoy-v3-api-msg-config-core-v3-httpprotocoloptions
+                              maxLength: 32
                               type: string
                               x-kubernetes-validations:
                               - message: invalid duration value
@@ -21646,6 +21750,22 @@ spec:
                               format: int32
                               minimum: 0
                               type: integer
+                            mergeSlashes:
+                              description: |-
+                                MergeSlashes determines whether the connection manager merges adjacent slashes in the request
+                                path before routing. This defaults to true. Disable this if a backend (e.g. an S3-compatible
+                                object store) relies on repeated slashes in the path having meaning, such as object keys that
+                                contain "//".
+                                See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-merge-slashes
+                              type: boolean
+                            normalizePath:
+                              description: |-
+                                NormalizePath determines whether the connection manager normalizes the path per RFC 3986 before
+                                routing, e.g. collapsing `.` and `..` segments and decoding percent-encoded characters. This
+                                defaults to true. Disable this if a backend (e.g. an S3-compatible object store) needs to see
+                                the original, unnormalized request path.
+                                See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-normalize-path
+                              type: boolean
                             preserveExternalRequestId:
                               description: |-
                                 PreserveExternalRequestId determines whether the connection manager will keep the x-request-id header if passed for
@@ -21682,6 +21802,7 @@ spec:
                               description: |-
                                 StreamIdleTimeout is the idle timeout for HTTP streams.
                                 See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/http_connection_manager/v3/http_connection_manager.proto#envoy-v3-api-field-extensions-filters-network-http-connection-manager-v3-httpconnectionmanager-stream-idle-timeout
+                              maxLength: 32
                               type: string
                               x-kubernetes-validations:
                               - message: invalid duration value
@@ -22004,6 +22125,7 @@ spec:
                                                         off computation. It should
                                                         be greater than zero and less
                                                         than or equal to max_interval.
+                                                      maxLength: 32
                                                       type: string
                                                       x-kubernetes-validations:
                                                       - message: invalid duration
@@ -22017,6 +22139,7 @@ spec:
                                                         equal to the base_interval
                                                         if set. The default is 10
                                                         times the base_interval.
+                                                      maxLength: 32
                                                       type: string
                                                       x-kubernetes-validations:
                                                       - message: invalid duration
@@ -22039,6 +22162,7 @@ spec:
                                               description: The timeout for the gRPC
                                                 request. This is the timeout for a
                                                 specific request
+                                              maxLength: 32
                                               type: string
                                               x-kubernetes-validations:
                                               - message: invalid duration value
@@ -22237,6 +22361,7 @@ spec:
                             keepAliveInterval:
                               description: The number of seconds between keep-alive
                                 probes.
+                              maxLength: 32
                               type: string
                               x-kubernetes-validations:
                               - message: invalid duration value
@@ -22252,6 +22377,7 @@ spec:
                             keepAliveTime:
                               description: The number of seconds a connection needs
                                 to be idle before keep-alive probes start being sent.
+                              maxLength: 32
                               type: string
                               x-kubernetes-validations:
                               - message: invalid duration value
@@ -22265,6 +22391,7 @@ spec:
                             If the timeout fires, the connection is closed. Setting this protects Envoy from clients that open connections and
                             then never complete the TLS handshake. Applied to every filter chain on the listener.
                             See here for more information: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/listener/v3/listener_components.proto#envoy-v3-api-field-config-listener-v3-filterchain-transport-socket-connect-timeout
+                          maxLength: 32
                           type: string
                           x-kubernetes-validations:
                           - message: invalid duration value
@@ -23137,6 +23264,80 @@ spec:
                       Disable the buffer filter.
                       Can be used to disable buffer policies applied at a higher level in the config hierarchy.
                     type: object
+                  filterStage:
+                    description: |-
+                      FilterStage specifies where in the HTTP filter chain the buffer filter is placed.
+                      By default the buffer filter runs late in the chain, after authentication, authorization
+                      and rate limiting, so that a request that is going to be rejected outright is rejected
+                      before its body is buffered.
+
+                      `maxRequestSize` is only enforced while the buffer filter is the filter accumulating the
+                      request body. A filter placed ahead of it that reads or holds the body first - for example
+                      an ext_proc that waits on its server, or a body transformation - consumes the body before
+                      the buffer filter ever sees it, and the limit is then inert. Move the buffer filter ahead
+                      of such a filter to make the limit enforce, at the cost of buffering bodies that a later
+                      authentication or authorization filter may go on to reject.
+
+                      The placement is a property of the whole filter chain rather than of a single route, and
+                      setting it here affects every route on the listener. Envoy resolves the per-route buffer
+                      config by filter name, and that name-based lookup is what lets a route-level policy override
+                      a Gateway-level one, so the gateway installs exactly one buffer filter per filter chain. If
+                      TrafficPolicies attached to the same listener ask for different stages, the earliest
+                      requested stage is used for the whole chain. A policy that only sets `disable` takes no part
+                      in that: it keeps its per-route override and leaves the placement to the policies that
+                      actually buffer, so turning buffering off on one route never moves the buffer filter for the
+                      others.
+
+                      Setting it therefore relaxes, never tightens, what the other routes on the listener do:
+                      a route that asked for the default placement will have its bodies buffered before
+                      authentication and authorization run, spending memory on requests those filters would go on
+                      to reject. Keep buffer policies on a listener consistent, or split the listener, if that
+                      matters for a route. The per-route `maxRequestSize` is unaffected and continues to apply
+                      per route.
+
+                      When request decompression is configured on the same filter chain, the decompressor filters
+                      stay ahead of the buffer filter, so that `maxRequestSize` is measured against the
+                      decompressed body rather than the encoded bytes - otherwise a small compressed body would
+                      satisfy the limit and expand past it upstream. Their default placement is already ahead of
+                      every stage except `Fault`, so this only moves them when the buffer filter is staged at
+                      `Fault`, and then it moves them for every route on the listener: request decompression on
+                      those routes runs ahead of fault injection, CORS, and any ext_proc staged at `Fault`.
+
+                      `filterStage.weight` must be 0: it breaks ties between several filters of the same type at
+                      one stage, and a filter chain carries at most one buffer filter.
+                    properties:
+                      predicate:
+                        default: During
+                        description: |-
+                          Predicate specifies placement relative to the stage: Before, During,
+                          or After.
+                        enum:
+                        - Before
+                        - During
+                        - After
+                        type: string
+                      stage:
+                        description: Stage selects the well-known position in the
+                          filter chain.
+                        enum:
+                        - Fault
+                        - AuthN
+                        - AuthZ
+                        - RateLimit
+                        - Route
+                        type: string
+                      weight:
+                        default: 0
+                        description: |-
+                          Weight controls ordering among multiple filters at the same
+                          stage and predicate. Higher weight places the filter earlier in the
+                          chain. Defaults to 0. Filters with the same stage, predicate, and
+                          weight are sorted alphabetically by filter name for consistency.
+                        format: int32
+                        type: integer
+                    required:
+                    - stage
+                    type: object
                   maxRequestSize:
                     anyOf:
                     - type: integer
@@ -23155,6 +23356,12 @@ spec:
                         && quantity(self).isLessThan(quantity('4Gi')))
                 type: object
                 x-kubernetes-validations:
+                - message: filterStage cannot be set when disable is set
+                  rule: '!(has(self.disable) && has(self.filterStage))'
+                - message: 'filterStage.weight has no effect for buffer and must be
+                    0: a filter chain carries at most one buffer filter, so there
+                    is nothing to break ties against'
+                  rule: '!has(self.filterStage) || self.filterStage.weight == 0'
                 - message: exactly one of the fields in [maxRequestSize disable] must
                     be set
                   rule: '[has(self.maxRequestSize),has(self.disable)].filter(x,x==true).size()
@@ -23838,6 +24045,7 @@ spec:
                       fixedDelay:
                         description: FixedDelay is the duration to delay before forwarding
                           the request.
+                        maxLength: 32
                         type: string
                         x-kubernetes-validations:
                         - message: invalid duration value
@@ -24588,6 +24796,7 @@ spec:
                               FillInterval defines the time duration between consecutive token fills.
                               This value must be a valid duration string (e.g., "1s", "500ms").
                               It determines the frequency of token replenishment.
+                            maxLength: 32
                             type: string
                             x-kubernetes-validations:
                             - message: invalid duration value
@@ -24685,6 +24894,7 @@ spec:
                       The backoff interval is capped at a max of 10 times the base interval.
                       E.g., given a value of 25ms, the first retry will be delayed randomly by 0-24ms, the 2nd by 0-74ms,
                       the 3rd by 0-174ms, and so on, and capped to a max of 10 times the base interval (250ms).
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -24697,6 +24907,7 @@ spec:
                       If a global timeout is configured on a route, this timeout must be less than the global
                       route timeout.
                       It is specified as a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "1s" or "500ms".
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -24901,6 +25112,7 @@ spec:
                       processed and when the backend response has been completely processed.
                       A value of 0 effectively disables the timeout.
                       It is specified as a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "1s" or "500ms".
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value
@@ -24909,6 +25121,7 @@ spec:
                     description: |-
                       StreamIdle specifies a timeout for a requests' idle streams.
                       A value of 0 effectively disables the timeout.
+                    maxLength: 32
                     type: string
                     x-kubernetes-validations:
                     - message: invalid duration value

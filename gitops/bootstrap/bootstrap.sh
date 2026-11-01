@@ -187,7 +187,7 @@ kubectl label configmap -n argocd argocd-cm argocd-rbac-cm app.kubernetes.io/man
 kubectl annotate configmap -n argocd argocd-cm argocd-rbac-cm meta.helm.sh/release-name=argocd meta.helm.sh/release-namespace=argocd --overwrite 2>/dev/null || true
 
 helm upgrade --install argocd argo/argo-cd \
-  --version 10.4.0 \
+  --version 10.11.6 \
   --namespace argocd \
   --set server.service.type=ClusterIP \
   --set configs.params."server\.insecure"=true \

@@ -47,7 +47,7 @@
 {{- $error = printf "%s\nSetting a user-defined nvidiaCtkPath is no longer supported. It can simply be removed without consequence." $error }}
 {{- $error = printf "%s\nIt was previously required to point the DRA driver at the host-path to the nvidia-ctk binary." $error }}
 {{- $error = printf "%s\nThis, in turn, was used to execute any CDI hooks injected into containers by the DRA driver." $error }}
-{{- $error = printf "%s\nNow a diffent binary is used called nvidia-cdi-hook that is installed by the DRA driver itself." $error }}
+{{- $error = printf "%s\nNow a different binary is used called nvidia-cdi-hook that is installed by the DRA driver itself." $error }}
 {{- $error = printf "%s\nThis renders the need for passing this user-defined flag obsolete." $error }}
 {{- fail $error }}
 {{- end }}

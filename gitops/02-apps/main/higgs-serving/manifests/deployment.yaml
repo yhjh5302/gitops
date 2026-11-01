@@ -69,7 +69,7 @@ spec:
               ) &
               mkdir -p /workspace
               if [ ! -d "/workspace/sglang-omni" ]; then
-                git clone https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
+                git clone --depth 1 --branch v0.2.0 https://github.com/sgl-project/sglang-omni.git /workspace/sglang-omni
               fi
               cd /workspace/sglang-omni
               if [ ! -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ]; then

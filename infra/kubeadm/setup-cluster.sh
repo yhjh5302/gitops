@@ -67,7 +67,7 @@ check_version_compatibility() {
     return 1
   fi
 
-  # 2. 마이너 버전 추출 (예: "1.35.6" -> "1.35")
+  # 2. 마이너 버전 추출 (예: "1.37.2" -> "1.37")
   local kubeadm_minor=""
   kubeadm_minor=$(echo "${kubeadm_ver}" | cut -d. -f1,2)
   local kubectl_minor=""
@@ -75,7 +75,7 @@ check_version_compatibility() {
   local kubelet_minor=""
   kubelet_minor=$(echo "${kubelet_ver}" | cut -d. -f1,2)
 
-  # 마이너 버전 숫자 비교를 위해 '.' 제거 (예: "1.35" -> "135")
+  # 마이너 버전 숫자 비교를 위해 '.' 제거 (예: "1.37" -> "137")
   local adm_num=${kubeadm_minor//./}
   local let_num=${kubelet_minor//./}
   local ctl_num=${kubectl_minor//./}
@@ -166,7 +166,7 @@ master_menu() {
         confirm_and_run "Containerd 설치" sudo bash "${KUBEADM_DIR}/install-containerd.sh" "$doc_data" "$doc_exec" "$cont_root" "$cont_state"
         ;;
       4)
-        local default_k8s_ver="${KUBERNETES_VERSION:-v1.36}"
+        local default_k8s_ver="${KUBERNETES_VERSION:-v1.37.2}"
         confirm_and_run "Kubernetes 도구 설치 (${default_k8s_ver})" sudo bash "${KUBEADM_DIR}/install-k8s-tools.sh" "${default_k8s_ver}"
         ;;
       5)
@@ -196,7 +196,7 @@ master_menu() {
         local service_cidr="${SERVICE_CIDR:-10.234.0.0/16}"
         local control_plane_endpoint="${CONTROL_PLANE_ENDPOINT:-cluster-endpoint:6443}"
         local image_repository="${IMAGE_REPOSITORY:-registry.k8s.io}"
-        local kubernetes_version="${KUBERNETES_VERSION:-v1.35.6}"
+        local kubernetes_version="${KUBERNETES_VERSION:-v1.37.2}"
 
         read -p "kubeadm init에 사용할 마스터 노드 IP를 입력하세요 (자동감지: ${parsed_ip}): " master_ip
         master_ip="${master_ip:-$parsed_ip}"
@@ -372,7 +372,7 @@ worker_menu() {
         confirm_and_run "Containerd 설치" sudo bash "${KUBEADM_DIR}/install-containerd.sh" "$doc_data" "$doc_exec" "$cont_root" "$cont_state"
         ;;
       4)
-        local default_k8s_ver="${KUBERNETES_VERSION:-v1.36}"
+        local default_k8s_ver="${KUBERNETES_VERSION:-v1.37.2}"
         confirm_and_run "Kubernetes 도구 설치 (${default_k8s_ver})" sudo bash "${KUBEADM_DIR}/install-k8s-tools.sh" "${default_k8s_ver}"
         ;;
       5)

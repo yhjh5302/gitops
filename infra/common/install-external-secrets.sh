@@ -20,11 +20,11 @@ echo -e "${GREEN}1단계: External Secrets Operator Helm Repository 등록${NC}"
 helm repo add external-secrets https://charts.external-secrets.io --force-update
 helm repo update external-secrets
 
-echo -e "\n${GREEN}2단계: External Secrets Operator 설치 (2.7.0)${NC}"
+echo -e "\n${GREEN}2단계: External Secrets Operator 설치 (2.14.0)${NC}"
 helm upgrade --install external-secrets external-secrets/external-secrets \
   --namespace external-secrets \
   --create-namespace \
-  --version 2.9.0 \
+  --version 2.14.0 \
   --set installCRDs=true \
   --wait --timeout 5m
 

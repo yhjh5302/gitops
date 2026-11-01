@@ -18,7 +18,7 @@ spec:
       values: |
         image:
           repository: burakince/mlflow
-          tag: "3.15.1"
+          tag: "3.16.0"
         extraEnvVars:
           MLFLOW_SERVER_ALLOWED_HOSTS: "*"
         backendStore:

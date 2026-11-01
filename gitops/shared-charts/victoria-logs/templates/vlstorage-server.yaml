@@ -104,6 +104,10 @@ spec:
         {{- with $app.extraContainers }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- with $app.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with $app.nodeSelector }}
       nodeSelector: {{ toYaml . | nindent 8 }}
       {{- end }}
@@ -165,7 +169,7 @@ spec:
         {{- with $pvc.accessModes }}
         accessModes: {{ toYaml . | nindent 10 }}
         {{- end }}
-        {{- with $pvc.volumeAttributeClassName }}
+        {{- with $pvc.volumeAttributesClassName }}
         volumeAttributesClassName: {{ . }}
         {{- end }}
         resources:

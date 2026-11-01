@@ -214,6 +214,14 @@ vlselect:
     unhealthyPodEvictionPolicy:
     labels: {}
 
+  # -- See `kubectl explain networkpolicy.spec` for more. Details are [here](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+  networkPolicy:
+    enabled: false
+    ingress: []
+    egress: []
+    labels: {}
+    annotations: {}
+
   # -- Array of tolerations object. Details are [here](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/)
   tolerations: []
     # - key: "key"
@@ -221,6 +229,8 @@ vlselect:
     #   value: "value"
     #   effect: "NoSchedule|PreferNoSchedule"
 
+  # -- Custom DNS config for pod. Details are [here](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config)
+  dnsConfig: {}
   # -- Pod's node selector. Details are [here](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)
   nodeSelector: {}
   # -- Pod affinity
@@ -548,6 +558,14 @@ vlinsert:
     unhealthyPodEvictionPolicy:
     labels: {}
 
+  # -- See `kubectl explain networkpolicy.spec` for more. Details are [here](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+  networkPolicy:
+    enabled: false
+    ingress: []
+    egress: []
+    labels: {}
+    annotations: {}
+
   # -- Array of tolerations object. Details are [here](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/)
   tolerations: []
     # - key: "key"
@@ -555,6 +573,8 @@ vlinsert:
     #   value: "value"
     #   effect: "NoSchedule|PreferNoSchedule"
 
+  # -- Custom DNS config for pod. Details are [here](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config)
+  dnsConfig: {}
   # -- Pod's node selector. Details are [here](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)
   nodeSelector: {}
   # -- Pod affinity
@@ -792,6 +812,14 @@ vlstorage:
     unhealthyPodEvictionPolicy:
     labels: {}
 
+  # -- See `kubectl explain networkpolicy.spec` for more. Details are [here](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+  networkPolicy:
+    enabled: false
+    ingress: []
+    egress: []
+    labels: {}
+    annotations: {}
+
   # -- Array of tolerations object. Node tolerations for server scheduling to nodes with taints. Details are [here](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/)
   tolerations:
     []
@@ -800,6 +828,8 @@ vlstorage:
     #   value: "value"
     #   effect: "NoSchedule|PreferNoSchedule"
 
+  # -- Custom DNS config for pod. Details are [here](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config)
+  dnsConfig: {}
   # -- Pod's node selector. Details are [here](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)
   nodeSelector: {}
 
@@ -820,7 +850,7 @@ vlstorage:
     accessModes:
       - ReadWriteOnce
 
-    # -- VolumeClassAttribute to user for persistent volume
+    # -- VolumeAttributesClass to use for persistent volume
     volumeAttributesClassName:
 
     # -- Persistent volume annotations
@@ -1147,6 +1177,14 @@ vmauth:
     unhealthyPodEvictionPolicy:
     labels: {}
 
+  # -- See `kubectl explain networkpolicy.spec` for more. Details are [here](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+  networkPolicy:
+    enabled: false
+    ingress: []
+    egress: []
+    labels: {}
+    annotations: {}
+
   # -- Array of tolerations object. Details are [here](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/)
   tolerations: []
     # - key: "key"
@@ -1154,6 +1192,8 @@ vmauth:
     #   value: "value"
     #   effect: "NoSchedule|PreferNoSchedule"
 
+  # -- Custom DNS config for pod. Details are [here](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config)
+  dnsConfig: {}
   # -- Pod's node selector. Details are [here](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)
   nodeSelector: {}
   # -- Pod affinity

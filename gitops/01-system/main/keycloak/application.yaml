@@ -23,7 +23,7 @@ spec:
         mode: production
         image:
           repository: quay.io/keycloak/keycloak
-          tag: "26.7.2"
+          tag: "26.8.1"
         realmImport:
           enabled: true
           files:

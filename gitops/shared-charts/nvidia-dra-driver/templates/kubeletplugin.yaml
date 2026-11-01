@@ -180,7 +180,7 @@ spec:
           value: {{ .Values.kubeletPlugin.kubeletRegistrarDirectoryPath | quote }}
         - name: KUBELET_PLUGINS_DIRECTORY_PATH
           value: {{ .Values.kubeletPlugin.kubeletPluginsDirectoryPath | quote }}
-        {{- if .Values.kubeletPlugin.containers.computeDomains.healthcheckPort }}
+        {{- if ge (int .Values.kubeletPlugin.containers.computeDomains.healthcheckPort) 0 }}
         - name: HEALTHCHECK_PORT
           value: {{ .Values.kubeletPlugin.containers.computeDomains.healthcheckPort | quote }}
         {{- end }}
@@ -317,7 +317,7 @@ spec:
           value: {{ .Values.kubeletPlugin.kubeletRegistrarDirectoryPath | quote }}
         - name: KUBELET_PLUGINS_DIRECTORY_PATH
           value: {{ .Values.kubeletPlugin.kubeletPluginsDirectoryPath | quote }}
-        {{- if .Values.kubeletPlugin.containers.gpus.healthcheckPort }}
+        {{- if ge (int .Values.kubeletPlugin.containers.gpus.healthcheckPort) 0 }}
         - name: HEALTHCHECK_PORT
           value: {{ .Values.kubeletPlugin.containers.gpus.healthcheckPort | quote }}
         {{- end }}

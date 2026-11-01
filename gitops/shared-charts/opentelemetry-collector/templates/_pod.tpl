@@ -1,7 +1,7 @@
 {{- define "opentelemetry-collector.pod" -}}
-{{- with .Values.imagePullSecrets }}
+{{- if .Values.imagePullSecrets }}
 imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+  {{- tpl (toYaml .Values.imagePullSecrets) . | nindent 2 }}
 {{- end }}
 serviceAccountName: {{ include "opentelemetry-collector.serviceAccountName" . }}
 automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
@@ -110,12 +110,12 @@ containers:
       - name: GOMEMLIMIT
         value: {{ include "opentelemetry-collector.gomemlimit" .Values.resources.limits.memory | quote }}
       {{- end }}
-      {{- with .Values.extraEnvs }}
-      {{- . | toYaml | nindent 6 }}
+      {{- if .Values.extraEnvs }}
+      {{- tpl (toYaml .Values.extraEnvs) . | nindent 6 }}
       {{- end }}
-    {{- with .Values.extraEnvsFrom }}
+    {{- if .Values.extraEnvsFrom }}
     envFrom:
-    {{- . | toYaml | nindent 6 }}
+    {{- tpl (toYaml .Values.extraEnvsFrom) . | nindent 6 }}
     {{- end }}
     {{- if .Values.lifecycleHooks }}
     lifecycle:
@@ -206,10 +206,19 @@ containers:
       {{- end }}
       {{- end }}
       {{- if .Values.presets.hostMetrics.enabled }}
+      {{- if .Values.presets.hostMetrics.hardenedMode }}
+      - name: host-proc
+        mountPath: /hostfs/proc
+        readOnly: true
+      - name: host-sys
+        mountPath: /hostfs/sys
+        readOnly: true
+      {{- else }}
       - name: hostfs
         mountPath: /hostfs
         readOnly: true
         mountPropagation: HostToContainer
+      {{- end }}
       {{- end }}
       {{- if .Values.presets.profiling.enabled }}
       - name: tracefs
@@ -259,9 +268,18 @@ volumes:
       path: /var/lib/docker/containers
   {{- end }}
   {{- if .Values.presets.hostMetrics.enabled }}
+  {{- if .Values.presets.hostMetrics.hardenedMode }}
+  - name: host-proc
+    hostPath:
+      path: /proc
+  - name: host-sys
+    hostPath:
+      path: /sys
+  {{- else }}
   - name: hostfs
     hostPath:
       path: /
+  {{- end }}
   {{- end }}
   {{- if .Values.presets.profiling.enabled }}
   - name: tracefs
@@ -271,9 +289,13 @@ volumes:
   {{- if .Values.extraVolumes }}
   {{- tpl (toYaml .Values.extraVolumes) . | nindent 2 }}
   {{- end }}
-{{- with .Values.nodeSelector }}
+{{- $nodeSelector := .Values.nodeSelector }}
+{{- if .Values.presets.profiling.enabled }}
+{{- $nodeSelector = mustMergeOverwrite (dict "kubernetes.io/os" "linux") ($nodeSelector | default dict) }}
+{{- end }}
+{{- with $nodeSelector }}
 nodeSelector:
-  {{- toYaml . | nindent 2 }}
+  {{- tpl (toYaml .) $ | nindent 2 }}
 {{- end }}
 {{- with .Values.affinity }}
 affinity:

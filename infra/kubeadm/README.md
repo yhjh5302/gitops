@@ -132,3 +132,25 @@ Once all node setups are completed:
    ```bash
    sudo kubeadm join <master-ip>:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
    ```
+
+---
+
+## 5. In-Place Cluster Upgrade Guide
+
+To perform zero-data-loss, in-place minor or patch upgrades (e.g. from `v1.36.3` to `v1.37.2`):
+
+### A) On the Control-Plane Node (`jin-server`)
+```bash
+# Run upgrade script on the control plane (auto-detects role or interactive prompt)
+sudo ./infra/kubeadm/upgrade-cluster.sh v1.37.2
+```
+
+### B) On Worker Nodes (`jin-vm`, etc.)
+```bash
+# Run with worker role flag or choose option '2' from the prompt
+sudo ./infra/kubeadm/upgrade-cluster.sh v1.37.2 --role=worker
+```
+
+This automated script supports both node roles:
+1. **Control-Plane**: Pre-flight cluster health checks, automated `etcd` snapshot & PKI backup, pre-pulling new K8s container images, `kubeadm upgrade apply`, and `kubelet` service restart.
+2. **Worker Node**: APT repository switching, package updates (`kubeadm`, `kubelet`, `kubectl`), executing `kubeadm upgrade node`, and `kubelet` service reload.

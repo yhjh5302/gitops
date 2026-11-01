@@ -84,7 +84,7 @@ TOOD: remove the override feature, or make the override work per-component.
 {{ $name }}-component: {{ .componentName }}
 {{- end }}
 {{- else -}}
-fail "selectorLabels: both arguments are required: context, componentName"
+{{- fail "selectorLabels: both arguments are required: context, componentName" -}}
 {{- end }}
 {{- end }}
 
