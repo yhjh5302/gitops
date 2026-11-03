@@ -44,7 +44,8 @@ spec:
               }
               EOF
               export HOME=/tmp XDG_DATA_HOME=/tmp XDG_CONFIG_HOME=/tmp
-              exec caddy run --config /tmp/Caddyfile --adapter caddyfile
+              cp /usr/bin/caddy /tmp/caddy
+              exec /tmp/caddy run --config /tmp/Caddyfile --adapter caddyfile
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

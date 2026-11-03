@@ -21,3 +21,24 @@ spec:
     syncOptions:
     - CreateNamespace=true
     - SkipDryRunOnMissingResource=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-root-applicationset
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/yhjh5302/gitops.git'
+    targetRevision: HEAD
+    path: gitops/00-root-app
+    directory:
+      include: main-applicationset.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true

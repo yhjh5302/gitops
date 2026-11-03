@@ -18,6 +18,9 @@ spec:
       releaseName: keycloak
       values: |
         fullnameOverride: "keycloak"
+        deployment:
+          strategy:
+            type: Recreate
         metrics:
           enabled: true
         mode: production
