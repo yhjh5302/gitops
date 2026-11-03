@@ -99,7 +99,7 @@ data:
         base_url: "http://llama-serving.private-assistant.svc.cluster.local:8000/v1"
         api_key: ${AGENT_AI_API_KEY}
         model: "bonsai-2-27b"
-        temperature: 0.2
+        temperature: 0.7
         max_tokens: 65536
         max_calls_per_hour: 1000
         cache_ttl: "1h"

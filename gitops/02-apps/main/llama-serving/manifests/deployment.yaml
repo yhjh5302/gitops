@@ -105,6 +105,8 @@ spec:
                 --frequency-penalty 0.2 \
                 --repeat-penalty 1.05 \
                 --jinja \
+                --no-reasoning-preserve \
+                --reasoning-effort low \
                 --metrics \
                 --alias "bonsai-2-27b"
           ports:

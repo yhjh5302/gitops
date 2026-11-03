@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        config/revision: "max-tokens-65536"
+        config/revision: "max-tokens-65536-temp-0.7"
       labels:
         app: versus-incident
     spec:
