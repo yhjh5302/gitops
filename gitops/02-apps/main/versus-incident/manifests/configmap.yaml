@@ -100,8 +100,8 @@ data:
         api_key: ${AGENT_AI_API_KEY}
         model: "bonsai-2-27b"
         temperature: 0.2
-        max_tokens: 1024
-        max_calls_per_hour: 120
+        max_tokens: 65536
+        max_calls_per_hour: 1000
         cache_ttl: "1h"
 
   agent_sources.yaml: |

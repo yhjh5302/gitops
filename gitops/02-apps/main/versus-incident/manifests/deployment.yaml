@@ -12,6 +12,8 @@ spec:
       app: versus-incident
   template:
     metadata:
+      annotations:
+        config/revision: "max-tokens-65536"
       labels:
         app: versus-incident
     spec:
