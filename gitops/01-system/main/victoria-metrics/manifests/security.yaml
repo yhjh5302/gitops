@@ -178,12 +178,13 @@ spec:
     - to:
       - operation:
           ports: ["8481"]
-    # Rule B: Allow query traffic from Grafana and private-assistant, and scraping from vmagent
+    # Rule B: Allow query traffic from Grafana, private-assistant, and versus-incident, and scraping from vmagent
     - from:
       - source:
           principals:
             - "cluster.local/ns/victoria-metrics/sa/victoria-metrics-grafana"
             - "cluster.local/ns/private-assistant/sa/private-assistant"
+            - "cluster.local/ns/private-assistant/sa/versus-incident"
             - "cluster.local/ns/victoria-metrics/sa/vmagent-victoria-metrics"
       to:
       - operation:

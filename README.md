@@ -126,10 +126,12 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 | **GitOps System**| Kyverno | `v1.19.2` | `3.9.2` | Kubernetes policy engine |
 | **GitOps System**| Argo Workflows | `v4.1.6` | `2.0.15` | Batch workflow engine |
 | **GitOps System**| MLflow | `3.16.0` | `1.11.7` | ML model registry (Image tag overridden in manifest) |
-| **Inference App** | Qwen Serving    | `Qwen/Qwen3.5-9B`      | - | Running Qwen 3.5 9B FP8 via vLLM (v0.32.0) and vLLM Router |
+| **Inference App** | Llama Serving   | `prism-ml/Ternary-Bonsai-2-27B-gguf` | - | Running Ternary Bonsai 2 27B (PQ2_0) via PrismML `llama-server` |
+| **SRE Agent App** | Versus Incident | `v1.4.33`              | - | AI SRE Agent connected to Llama Serving and in-cluster Kubernetes RBAC |
+| **Inference App** | Qwen Serving    | `Qwen/Qwen3.5-9B`      | - | (Inactive / Disabled via ApplicationSet exclusion) |
 | **Inference App** | Gemma Serving   | `google/gemma-4-e4b-it`| - | (Inactive / Disabled via ApplicationSet exclusion) |
-| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | TTS via SGLang-Omni (`0.1.1`) |
-| **Inference App** | Whisper Serving | `fedirz/faster-whisper-server:latest-cpu` | - | STT via faster-whisper-server |
+| **Inference App** | Higgs Serving   | `bosonai/higgs-tts-3-4b` | - | (Inactive / Disabled via ApplicationSet exclusion) |
+| **Inference App** | Whisper Serving | `fedirz/faster-whisper-server:latest-cpu` | - | (Inactive / Disabled via ApplicationSet exclusion) |
 
 ---
 
@@ -180,7 +182,7 @@ The platform is designed to run on a single or multi-node Kubernetes cluster. Th
 │   │       ├── postgres/, valkey/, victoria-metrics/, istio/, kgateway/, etc. (No Keycloak/MLflow/GPUs)
 │   ├── 02-apps/                        # Real-Time AI Agent applications
 │   │   ├── main/                       # Application runtimes on Main Cluster
-│   │   │   └── private-assistant/, qwen-serving/, gemma-serving/, higgs-serving/, whisper-serving/
+│   │   │   └── llama-serving/, versus-incident/, private-assistant/, qwen-serving/, gemma-serving/, higgs-serving/, whisper-serving/
 │   │   └── sub/                        # Mac Kind local bridging and tunnels
 │   │       └── cloudflared-tunnel/, gguf-routing/
 │   └── shared-charts/                  # Shared base Helm charts & update manager

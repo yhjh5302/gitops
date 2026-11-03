@@ -186,6 +186,7 @@ if [ -f "${CONFIG_FILE}" ]; then
   kubectl exec -n vault vault-0 -- vault kv put secret/argocd client-secret="${ARGOCD_CLIENT_SECRET:-argocd_client_secret_placeholder}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/grafana client-secret="${GRAFANA_CLIENT_SECRET:-grafana_client_secret_placeholder}" admin-password="${GRAFANA_ADMIN_PASSWORD:-}" &>/dev/null
   kubectl exec -n vault vault-0 -- vault kv put secret/private-assistant huggingface-token="${HF_TOKEN:-huggingface_token_placeholder}" db-user="${PRIVATE_ASSISTANT_DB_USERNAME:-private_assistant}" database-password="${PRIVATE_ASSISTANT_DB_PASSWORD:-}" &>/dev/null
+  kubectl exec -n vault vault-0 -- vault kv put secret/versus-incident gateway-secret="${VERSUS_GATEWAY_SECRET:-$(openssl rand -hex 32)}" ai-api-key="${VERSUS_AI_API_KEY:-$(openssl rand -hex 16)}" &>/dev/null
 
   # Victoria Metrics용 Prometheus 메트릭 수집 정책 및 토큰 구성
   echo " -> Victoria Metrics용 Prometheus 메트릭 수집 정책 및 토큰 구성 중..."

@@ -144,6 +144,8 @@ spec:
                     "secret": "${OAUTH2_CLIENT_SECRET}",
                     "redirectUris": [
                       "https://private-assistant.jin-server.com/oauth2/callback",
+                      "https://versus.jin-server.com/oauth2/callback",
+                      "https://llama.jin-server.com/oauth2/callback",
                       "https://argocd.jin-server.com/oauth2/callback",
                       "https://grafana.jin-server.com/oauth2/callback",
                       "https://workflows.jin-server.com/oauth2/callback",

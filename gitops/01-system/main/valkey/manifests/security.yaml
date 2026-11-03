@@ -37,11 +37,12 @@ spec:
       app: valkey
   action: ALLOW
   rules:
-    # Rule A: Allow Valkey access from private-assistant and oauth2-proxy pods
+    # Rule A: Allow Valkey access from private-assistant, versus-incident, and oauth2-proxy pods
     - from:
       - source:
           principals:
             - "cluster.local/ns/private-assistant/sa/private-assistant"
+            - "cluster.local/ns/private-assistant/sa/versus-incident"
             - "cluster.local/ns/oauth2-proxy/sa/oauth2-proxy"
       to:
       - operation:

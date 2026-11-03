@@ -1,0 +1,199 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: versus-incident
+  namespace: private-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: versus-incident
+  template:
+    metadata:
+      labels:
+        app: versus-incident
+    spec:
+      serviceAccountName: versus-incident
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        # Local auth-bridge sidecar: injects Vault-backed X-Gateway-Secret header after Istio OAuth2-Proxy SSO verification.
+        - name: auth-proxy
+          image: caddy:2-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cat <<EOF > /tmp/Caddyfile
+              {
+                admin off
+                auto_https off
+              }
+              :3000 {
+                reverse_proxy 127.0.0.1:3001 {
+                  header_up X-Gateway-Secret "${GATEWAY_SECRET}"
+                }
+              }
+              EOF
+              export HOME=/tmp XDG_DATA_HOME=/tmp XDG_CONFIG_HOME=/tmp
+              exec caddy run --config /tmp/Caddyfile --adapter caddyfile
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: GATEWAY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: versus-incident-secrets
+                  key: gateway-secret
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+          volumeMounts:
+            - name: proxy-tmp
+              mountPath: /tmp
+        - name: versus-incident
+          image: ghcr.io/versuscontrol/versus-incident:v1.4.33
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+          env:
+            - name: GATEWAY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: versus-incident-secrets
+                  key: gateway-secret
+            - name: STORAGE_TYPE
+              value: "file"
+            - name: AGENT_ENABLE
+              value: "true"
+            - name: AGENT_MODE
+              value: "detect"
+            - name: AGENT_NEW_SERVICE_GRACE
+              value: "30m"
+            - name: AGENT_AI_ENABLE
+              value: "true"
+            - name: AGENT_AI_PROVIDER
+              value: "openai"
+            - name: AGENT_AI_MODEL
+              value: "bonsai-2-27b"
+            - name: AGENT_AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: versus-incident-secrets
+                  key: ai-api-key
+            - name: GIT_AUTH_TOKEN
+              value: ""
+            - name: REDIS_HOST
+              value: "valkey.valkey.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: versus-incident-secrets
+                  key: redis-password
+            - name: REDIS_DB
+              value: "1"
+            - name: REDIS_TLS
+              value: "false"
+            - name: REDIS_INSECURE_SKIP_VERIFY
+              value: "false"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.yaml
+              subPath: config.yaml
+            - name: config-volume
+              mountPath: /app/config/connectors.yaml
+              subPath: connectors.yaml
+            - name: config-volume
+              mountPath: /app/config/agent_sources.yaml
+              subPath: agent_sources.yaml
+            - name: config-volume
+              mountPath: /app/config/tools.yaml
+              subPath: tools.yaml
+            - name: data-volume
+              mountPath: /app/data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config-volume
+          configMap:
+            name: versus-incident-config
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: versus-incident-data-pvc
+        - name: tmp
+          emptyDir: {}
+        - name: proxy-tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: versus-incident
+  namespace: private-assistant
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: versus-incident

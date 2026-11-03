@@ -1,0 +1,150 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: versus-incident-config
+  namespace: private-assistant
+data:
+  config.yaml: |
+    name: versus-incident
+    host: 127.0.0.1
+    port: 3001
+
+    gateway_secret: ${GATEWAY_SECRET}
+
+    storage:
+      type: file
+      file:
+        max_incidents: 1000
+
+    alert:
+      debug_body: false
+      slack:
+        enable: false
+      telegram:
+        enable: false
+      viber:
+        enable: false
+      email:
+        enable: false
+      msteams:
+        enable: false
+      lark:
+        enable: false
+
+    queue:
+      enable: false
+      debug_body: false
+      sns:
+        enable: false
+      sqs:
+        enable: false
+
+    redis:
+      insecure_skip_verify: false
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      db: 1
+      tls: false
+
+    agent:
+      enable: true
+      mode: detect
+      poll_interval: 30s
+      lookback: 5m
+      new_service_grace: 30m
+      batch_max: 5000
+      signal_max_bytes: 65536
+      service_patterns:
+        - '(?i)\bservice[._-]?name["\s:=]+"?([A-Za-z0-9._-]+)'
+        - '(?i)\b(?:service|svc|app|component)\s*=\s*"?([A-Za-z0-9._-]+)'
+        - '(?i)"(?:service|svc|app|component)"\s*:\s*"([A-Za-z0-9._-]+)"'
+        - '^\s*\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d{1,9})?\s+([A-Za-z][A-Za-z0-9._-]*)\s+\['
+        - '\[\s*([A-Za-z][A-Za-z0-9._-]*)\s*,\s*(?i:request[_-]?id|trace[_-]?id|span[_-]?id)\b'
+        - '\[[^\]]+\]\s+\[([A-Za-z0-9._-]+)\]'
+        - '---\s+\[[^\]]*\]\s+\[([A-Za-z0-9._-]+)\]'
+        - '---\s+\[[^\]]*\]\s+([A-Za-z][A-Za-z0-9._-]*)\s*:'
+        - '([A-Za-z0-9._-]+)\[\d+\]:'
+        - '\[([A-Za-z0-9._-]+)\]'
+      redaction:
+        enable: true
+        redact_ips: false
+        extra_patterns:
+          - "(?i)password=\\S+"
+          - "Authorization:\\s*Bearer\\s+\\S+"
+      catalog:
+        persist_interval: 30s
+        auto_promote_after: 100
+        spike_z: 3.0
+        spike_abs_ceiling: 0
+        spike_sustain_ticks: 1
+        spike_min_frequency: 5
+        spike_min_baseline_count: 20
+      miner:
+        similarity_threshold: 0.4
+        tree_depth: 4
+        max_children: 100
+      regex:
+        default_pattern: "(?i).*error.*"
+        rules:
+          - name: oom-killer
+            pattern: "Out of memory: Killed process"
+          - name: panic
+            pattern: "(?i)panic:"
+          - name: 5xx-burst
+            pattern: "HTTP/[0-9.]+\\s+5\\d\\d"
+      ai:
+        enable: true
+        provider: "openai"
+        base_url: "http://llama-serving.private-assistant.svc.cluster.local:8000/v1"
+        api_key: ${AGENT_AI_API_KEY}
+        model: "bonsai-2-27b"
+        temperature: 0.2
+        max_tokens: 1024
+        max_calls_per_hour: 120
+        cache_ttl: "1h"
+
+  agent_sources.yaml: |
+    sources:
+      []
+
+  connectors.yaml: |
+    connectors:
+      kubernetes:
+        cluster_id: "default"
+        credential_id: ""
+        timeout: "15s"
+        discovery_ttl: "5m"
+        change_capture: "continuous"
+        allow_private_networks: true
+        endpoint_cidrs: []
+        auth:
+          mode: "in_cluster"
+        actions:
+          enable: false
+          max_replicas: 20
+          timeout: "15s"
+          auth:
+            mode: ""
+
+  tools.yaml: |
+    tools:
+      tool_timeout: "30s"
+      parallel_tools: false
+      recent_changes:
+        git:
+          auth:
+            token: "${GIT_AUTH_TOKEN}"
+            ssh_key_path: ""
+          repos:
+            - url: "https://github.com/yhjh5302/gitops.git"
+              branch: "main"
+              service: "gitops"
+      describe_dependencies:
+        services:
+          - name: "versus-incident"
+            depends_on:
+              - "llama-serving"
+              - "valkey"
+      find_runbook:
+        embedding_model: ""

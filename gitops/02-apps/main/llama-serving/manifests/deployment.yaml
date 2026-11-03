@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: llama-serving
+  namespace: private-assistant
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-serving
+  namespace: private-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: llama-serving
+  template:
+    metadata:
+      labels:
+        app: llama-serving
+    spec:
+      serviceAccountName: llama-serving
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "jin-server"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      initContainers:
+        - name: download-model
+          image: nvidia/cuda:12.8.1-runtime-ubuntu24.04
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              mkdir -p /root/.cache/huggingface/llama-bin /root/.cache/huggingface/bonsai2
+              if [ ! -x "/root/.cache/huggingface/llama-bin/llama-server" ] || [ ! -e "/root/.cache/huggingface/llama-bin/libgomp.so.1" ] || [ ! -s "/root/.cache/huggingface/bonsai2/Ternary-Bonsai-2-27B-PQ2_0.gguf" ] || [ ! -s "/root/.cache/huggingface/bonsai2/Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf" ]; then
+                apt-get update && apt-get install -y --no-install-recommends curl ca-certificates libgomp1 && rm -rf /var/lib/apt/lists/*
+                cp -a /lib/x86_64-linux-gnu/libgomp.so.1* /root/.cache/huggingface/llama-bin/
+              fi
+              if [ ! -x "/root/.cache/huggingface/llama-bin/llama-server" ]; then
+                echo "Downloading PrismML llama.cpp CUDA 12.8 release binary..."
+                curl -fL "https://github.com/PrismML-Eng/llama.cpp/releases/download/prism-b12128-d7b2896/llama-prism-b12128-d7b2896-bin-linux-cuda-12.8-x64.tar.gz" \
+                  | tar -xz -C /root/.cache/huggingface/llama-bin --strip-components=1
+                chmod +x /root/.cache/huggingface/llama-bin/llama-server
+              fi
+              AUTH_ARGS=()
+              if [ -n "${HF_TOKEN:-}" ] && [ "${HF_TOKEN}" != "huggingface_token_placeholder" ]; then
+                AUTH_ARGS=(-H "Authorization: Bearer ${HF_TOKEN}")
+              fi
+              for FILE in "Ternary-Bonsai-2-27B-PQ2_0.gguf" "Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf"; do
+                TARGET="/root/.cache/huggingface/bonsai2/${FILE}"
+                if [ ! -s "${TARGET}" ]; then
+                  echo "Downloading ${FILE}..."
+                  curl -fL "${AUTH_ARGS[@]}" \
+                    -o "${TARGET}.part" \
+                    "https://huggingface.co/prism-ml/Ternary-Bonsai-2-27B-gguf/resolve/main/${FILE}"
+                  mv "${TARGET}.part" "${TARGET}"
+                fi
+              done
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: llama-serving-secrets
+                  key: huggingface-token
+          volumeMounts:
+            - name: model-cache
+              mountPath: /root/.cache/huggingface
+              subPath: huggingface
+      containers:
+        - name: llama-server
+          image: nvidia/cuda:12.8.1-runtime-ubuntu24.04
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              export LD_LIBRARY_PATH="/root/.cache/huggingface/llama-bin:/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}"
+              exec /root/.cache/huggingface/llama-bin/llama-server \
+                -m /root/.cache/huggingface/bonsai2/Ternary-Bonsai-2-27B-PQ2_0.gguf \
+                --mmproj /root/.cache/huggingface/bonsai2/Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf \
+                --host 0.0.0.0 \
+                --port 8000 \
+                -ngl 99 \
+                -fa on \
+                -ctk q8_0 \
+                -ctv q4_0 \
+                -c 131072 \
+                -np 1 \
+                -b 2048 \
+                -ub 512 \
+                --temp 1.0 \
+                --top-p 0.95 \
+                --top-k 20 \
+                --min-p 0.05 \
+                --presence-penalty 0.1 \
+                --frequency-penalty 0.2 \
+                --repeat-penalty 1.05 \
+                --jinja \
+                --metrics \
+                --alias "bonsai-2-27b"
+          ports:
+            - containerPort: 8000
+              name: http
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            failureThreshold: 360
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 15
+          resources:
+            limits:
+              cpu: "8"
+              memory: "16Gi"
+              nvidia.com/gpu: 1
+            requests:
+              cpu: "4"
+              memory: "8Gi"
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            - name: model-cache
+              mountPath: /root/.cache/huggingface
+              subPath: huggingface
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: llama-model-cache-pvc

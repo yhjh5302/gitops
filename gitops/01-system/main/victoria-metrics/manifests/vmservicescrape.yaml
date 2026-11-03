@@ -165,3 +165,23 @@ spec:
   endpoints:
     - port: http
       interval: 5s
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: victoria-metrics-llama-serving
+  namespace: victoria-metrics
+  labels:
+    app.kubernetes.io/instance: victoria-metrics
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+spec:
+  selector:
+    matchLabels:
+      app: llama-serving
+  namespaceSelector:
+    matchNames:
+      - private-assistant
+  endpoints:
+    - port: http
+      interval: 5s

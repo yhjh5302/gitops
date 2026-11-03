@@ -30,6 +30,8 @@ ARGOCD_CLIENT_SECRET_VAL=$(openssl rand -hex 16)
 GRAFANA_CLIENT_SECRET_VAL=$(openssl rand -hex 16)
 ARGO_WORKFLOWS_CLIENT_SECRET_VAL=$(openssl rand -hex 16)
 PRIVATE_ASSISTANT_DB_PASS=$(openssl rand -hex 16)
+VERSUS_GATEWAY_SECRET_VAL=$(openssl rand -hex 32)
+VERSUS_AI_API_KEY_VAL=$(openssl rand -hex 16)
 
 # 3. env 파일의 특정 비밀번호 라인들만 덮어쓰기 치환 (GITHUB_APP 관련 설정 보존)
 echo "3단계: vault-config.env에 난수 주입 중..."
@@ -49,6 +51,8 @@ sed -i "s#^OAUTH2_CLIENT_ID=.*#OAUTH2_CLIENT_ID=\"platform\"#g" "${ENV_FILE}"
 sed -i "s#^ARGOCD_CLIENT_SECRET=.*#ARGOCD_CLIENT_SECRET=\"${ARGOCD_CLIENT_SECRET_VAL}\"#g" "${ENV_FILE}"
 sed -i "s#^GRAFANA_CLIENT_SECRET=.*#GRAFANA_CLIENT_SECRET=\"${GRAFANA_CLIENT_SECRET_VAL}\"#g" "${ENV_FILE}"
 sed -i "s#^ARGO_WORKFLOWS_CLIENT_SECRET=.*#ARGO_WORKFLOWS_CLIENT_SECRET=\"${ARGO_WORKFLOWS_CLIENT_SECRET_VAL}\"#g" "${ENV_FILE}"
+sed -i "s#^VERSUS_GATEWAY_SECRET=.*#VERSUS_GATEWAY_SECRET=\"${VERSUS_GATEWAY_SECRET_VAL}\"#g" "${ENV_FILE}"
+sed -i "s#^VERSUS_AI_API_KEY=.*#VERSUS_AI_API_KEY=\"${VERSUS_AI_API_KEY_VAL}\"#g" "${ENV_FILE}"
 
 echo "============================================================="
 echo "✓ 비밀번호 생성 완료! vault-config.env 생성 및 덮어쓰기가 완료되었습니다."

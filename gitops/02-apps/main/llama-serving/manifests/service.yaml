@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-serving
+  namespace: private-assistant
+  labels:
+    app: llama-serving
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http-api
+      protocol: TCP
+    - port: 80
+      targetPort: 8000
+      name: http
+      protocol: TCP
+  selector:
+    app: llama-serving

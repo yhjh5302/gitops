@@ -13,6 +13,14 @@ spec:
       - path: gitops/02-apps/main/*
       - path: gitops/02-apps/main/gemma-serving
         exclude: true
+      - path: gitops/02-apps/main/higgs-serving
+        exclude: true
+      - path: gitops/02-apps/main/whisper-serving
+        exclude: true
+      - path: gitops/02-apps/main/qwen-serving
+        exclude: true
+      - path: gitops/02-apps/main/private-assistant
+        exclude: true
   template:
     metadata:
       name: 'root-main-{{path.basename}}'
